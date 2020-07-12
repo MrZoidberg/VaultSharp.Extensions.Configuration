@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <PropertyGroup Label="Build">
+    <LangVersion>latest</LangVersion>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <PropertyGroup Label="Package">
+    <Authors>Mikhail Merkulov</Authors>
+    <Company>Mikhail Merkulov</Company>
+    <Copyright>Copyright 2020 © Mikhail Merkulov. All rights Reserved</Copyright>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>hhttps://github.com/MrZoidberg/VaultSharp.Extensions.Configuration</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/MrZoidberg/VaultSharp.Extensions.Configuration.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageReleaseNotes>https://github.com/MrZoidberg/VaultSharp.Extensions.Configuration/releases</PackageReleaseNotes>
+  </PropertyGroup>
+  <ItemGroup Label="Package References">
+    <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" PrivateAssets="All" Version="3.0.0" />
+    <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" PrivateAssets="All" Version="16.6.13" />
+    <PackageReference Include="MinVer" PrivateAssets="All" Version="2.3.0" />
+    <PackageReference Include="StyleCop.Analyzers" PrivateAssets="All" Version="1.1.118" />
+  </ItemGroup>
+</Project>
