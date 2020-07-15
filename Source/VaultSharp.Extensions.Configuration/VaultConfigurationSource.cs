@@ -2,14 +2,13 @@
 {
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.Logging;
-    using V1.SecretsEngines;
+    using VaultSharp.V1.SecretsEngines;
 
     /// <summary>
     /// Vault configuration source.
     /// </summary>
     public class VaultConfigurationSource : IConfigurationSource
     {
-
         /// <summary>
         /// Default Vault URL.
         /// </summary>

@@ -3,18 +3,18 @@
     using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
-    using VaultSharp.Core;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.Logging;
     using Microsoft.VisualStudio.Threading;
+    using VaultSharp;
+    using VaultSharp.Core;
     using VaultSharp.V1.AuthMethods;
     using VaultSharp.V1.AuthMethods.AppRole;
     using VaultSharp.V1.AuthMethods.Token;
     using VaultSharp.V1.Commons;
-    using VaultSharp;
 
     /// <summary>
-    /// Vault configuration provider
+    /// Vault configuration provider.
     /// </summary>
     public class VaultConfigurationProvider : ConfigurationProvider
     {

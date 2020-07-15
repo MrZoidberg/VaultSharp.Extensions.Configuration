@@ -3,12 +3,16 @@
   <PropertyGroup Label="Build">
     <TargetFramework>netstandard2.1</TargetFramework>
     <LangVersion>8.0</LangVersion>
+    <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+    <NoWarn>SA1633;SA1028;SA1309;CA1303</NoWarn>
+    <PackageId>VaultSharp.Extensions.Configuration</PackageId>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 
   <PropertyGroup Label="Package">
-    <Product>Project Title</Product>
-    <Description>Project Description</Description>
-    <PackageTags>Tag1;Tag2;Tag3</PackageTags>
+    <Product>VaultSharp.Extensions.Configuration</Product>
+    <Description>Configuration extension that allows you to use Hashicorp Vault as a configuration backend.</Description>
+    <PackageTags>Vault;Configuration;Data protection;Hashicorp</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
@@ -16,6 +20,12 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="3.1.5" />
     <PackageReference Include="Microsoft.VisualStudio.Threading" Version="16.6.13" />
     <PackageReference Include="VaultSharp" Version="1.4.0.4" />
+  </ItemGroup>
+
+  <ItemGroup Label="Project References">
+    <PackageReference Include="GitVersionTask" Version="5.3.6">
+      <PrivateAssets>All</PrivateAssets>
+    </PackageReference>
   </ItemGroup>
 
 </Project>

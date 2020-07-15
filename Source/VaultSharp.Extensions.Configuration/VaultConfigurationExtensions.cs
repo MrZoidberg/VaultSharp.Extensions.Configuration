@@ -37,6 +37,16 @@
             this IConfigurationBuilder configuration,
             string basePath)
         {
+            if (configuration == null)
+            {
+                throw new ArgumentNullException(nameof(configuration));
+            }
+
+            if (basePath == null)
+            {
+                throw new ArgumentNullException(nameof(basePath));
+            }
+
             var vaultOptions = new VaultOptions(
                 Environment.GetEnvironmentVariable(VaultEnvironmentVariableNames.Address) ??
                 VaultConfigurationSource.DefaultVaultUrl,
