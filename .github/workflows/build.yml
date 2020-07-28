@@ -42,16 +42,9 @@ jobs:
     - name: 'Dotnet Cake Pack'
       run: dotnet cake --target=Pack
       shell: pwsh
-    - name: 'Publish Packages (nupkg)'
-      uses: actions/upload-artifact@v2
-      with:
-        name: package
-        path: './Artefacts/*.nupkg;'
-    - name: 'Publish Packages (snupkg)'
-      uses: actions/upload-artifact@v2
-      with:
-        name: package
-        path: './Artefacts/*.snupkg;'
+    - name: 'Publish Packages'
+      run: dotnet cake --target=Publish
+      shell: pwsh
     - name: 'Publish Code Coverage'
       uses: actions/upload-artifact@v2
       with:
