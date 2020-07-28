@@ -35,7 +35,7 @@ jobs:
       run: dotnet cake --target=Pack
       shell: pwsh
     - name: 'Dotnet Cacke Publish'
-      run: dotnet cake --target=Publish
+      run: dotnet cake --target=Publish --nuget-key="${{secrets.NUGET_API_KEY}}"
       shell: pwsh
     - name: 'Publish Code Coverage'
       uses: actions/upload-artifact@v2

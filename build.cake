@@ -1,5 +1,5 @@
 var target = Argument("Target", "Default");
-var nugetApiKey = EnvironmentVariable("NUGET_API_KEY");
+var nugetApiKey = Argument<string>("nuget-key", null);
 
 var configuration =
     HasArgument("Configuration") ? Argument<string>("Configuration") :
@@ -81,6 +81,7 @@ Task("Publish")
     .IsDependentOn("Pack")
     .DoesForEach(GetFiles($"{artefactsDirectory}/*.nupkg"), file =>
     {
+        context.Information("Publishing {0}...", file.GetFilename().FullPath);
         NuGetPush(file.ToString(), new NuGetPushSettings {
             Source = "https://api.nuget.org/v3/index.json",
             ApiKey = nugetApiKey,
