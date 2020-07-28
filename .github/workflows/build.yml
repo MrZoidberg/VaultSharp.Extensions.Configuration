@@ -42,9 +42,6 @@ jobs:
     - name: 'Dotnet Cake Pack'
       run: dotnet cake --target=Pack
       shell: pwsh
-    - name: 'Publish Packages'
-      run: dotnet cake --target=Publish
-      shell: pwsh
     - name: 'Publish Code Coverage'
       uses: actions/upload-artifact@v2
       with:

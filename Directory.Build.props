@@ -10,7 +10,7 @@
     <Copyright>Copyright 2020 © Mikhail Merkulov. All rights Reserved</Copyright>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageProjectUrl>hhttps://github.com/MrZoidberg/VaultSharp.Extensions.Configuration</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/MrZoidberg/VaultSharp.Extensions.Configuration</PackageProjectUrl>
     <RepositoryUrl>https://github.com/MrZoidberg/VaultSharp.Extensions.Configuration.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageReleaseNotes>https://github.com/MrZoidberg/VaultSharp.Extensions.Configuration/releases</PackageReleaseNotes>
