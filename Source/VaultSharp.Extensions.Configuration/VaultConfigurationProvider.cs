@@ -18,7 +18,7 @@
     /// </summary>
     public class VaultConfigurationProvider : ConfigurationProvider
     {
-        private readonly ILogger _logger;
+        private readonly ILogger? _logger;
 
         private VaultConfigurationSource _source;
 
@@ -27,7 +27,7 @@
         /// </summary>
         /// <param name="source">Vault configuration source.</param>
         /// <param name="logger">Logger instance.</param>
-        public VaultConfigurationProvider(VaultConfigurationSource source, ILogger logger)
+        public VaultConfigurationProvider(VaultConfigurationSource source, ILogger? logger)
         {
             this._logger = logger;
             this._source = source;
@@ -84,7 +84,7 @@
 
         private async IAsyncEnumerable<KeyedSecretData> ReadKeysAsync(IVaultClient vaultClient, string path)
         {
-            Secret<ListInfo> keys = null;
+            Secret<ListInfo>? keys = null;
             try
             {
                 keys = await vaultClient.V1.Secrets.KeyValue.V2.ReadSecretPathsAsync(path, this._source.MountPoint).ConfigureAwait(false);

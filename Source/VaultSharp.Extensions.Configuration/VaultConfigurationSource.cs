@@ -19,7 +19,7 @@
         /// </summary>
         internal const string DefaultVaultToken = "root";
 
-        private readonly ILogger _logger;
+        private readonly ILogger? _logger;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="VaultConfigurationSource"/> class.
@@ -28,7 +28,7 @@
         /// <param name="basePath">Base path.</param>
         /// <param name="mountPoint">Mounting point.</param>
         /// <param name="logger">Logger instance.</param>
-        public VaultConfigurationSource(VaultOptions options, string basePath, string mountPoint = null, ILogger logger = null)
+        public VaultConfigurationSource(VaultOptions options, string basePath, string? mountPoint = null, ILogger? logger = null)
         {
             this._logger = logger;
             this.Options = options;
