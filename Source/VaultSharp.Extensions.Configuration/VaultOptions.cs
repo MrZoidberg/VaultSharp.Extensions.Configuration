@@ -28,16 +28,16 @@ namespace VaultSharp.Extensions.Configuration
         /// <summary>
         /// Gets Vault access token.
         /// </summary>
-        public string VaultToken { get; }
+        public string? VaultToken { get; }
 
         /// <summary>
         /// Gets Vault secret.
         /// </summary>
-        public string VaultSecret { get; }
+        public string? VaultSecret { get; }
 
         /// <summary>
         /// Gets Vault role identifier.
         /// </summary>
-        public string VaultRoleId { get; }
+        public string? VaultRoleId { get; }
     }
 }

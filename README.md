@@ -1,10 +1,13 @@
-![Banner](Images/Banner.png)
+# VaultSharp.Extensions.Configuration
 
-# Project Title
+[![GitHub Actions Status](https://github.com/MrZoidberg/VaultSharp.Extensions.Configuration/workflows/Build/badge.svg?branch=master)](https://github.com/MrZoidberg/VaultSharp.Extensions.Configuration/actions) ![Nuget](https://img.shields.io/nuget/v/VaultSharp.Extensions.Configuration)
 
-[![GitHub Actions Status](https://github.com/Username/Project/workflows/Build/badge.svg?branch=master)](https://github.com/Username/Project/actions)
+VaultSharp.Extensions.Configuration is an extension to VaultSharpt that allows reading configuration options from Vault.
 
-[![GitHub Actions Build History](https://buildstats.info/github/chart/Username/Project?branch=master&includeBuildsFromPullRequest=false)](https://github.com/Username/Project/actions)
+## Get Started
 
+TBD
 
-Project Description
+## Limitations
+
+Currently, only token and AppRole based authentication is supported.
