@@ -14,16 +14,18 @@
         /// <param name="configuration">Configuration builder instance.</param>
         /// <param name="options">Vault options provider action.</param>
         /// <param name="basePath">Base path for vault keys.</param>
+        /// <param name="mountPoint">KV mounting point.</param>
         /// <returns>Instance of <see cref="IConfigurationBuilder"/>.</returns>
         public static IConfigurationBuilder AddVaultConfiguration(
             this IConfigurationBuilder configuration,
             Func<VaultOptions> options,
-            string basePath)
+            string basePath,
+            string? mountPoint = null)
         {
             _ = options ?? throw new ArgumentNullException(nameof(options));
 
             var vaultOptions = options();
-            configuration.Add(new VaultConfigurationSource(vaultOptions, basePath));
+            configuration.Add(new VaultConfigurationSource(vaultOptions, basePath, mountPoint));
             return configuration;
         }
 
@@ -32,10 +34,12 @@
         /// </summary>
         /// <param name="configuration">Configuration builder instance.</param>
         /// <param name="basePath">Base path for vault keys.</param>
+        /// <param name="mountPoint">KV mounting point.</param>
         /// <returns>Instance of <see cref="IConfigurationBuilder"/>.</returns>
         public static IConfigurationBuilder AddVaultConfiguration(
             this IConfigurationBuilder configuration,
-            string basePath)
+            string basePath,
+            string? mountPoint = null)
         {
             if (configuration == null)
             {
@@ -53,7 +57,7 @@
                 Environment.GetEnvironmentVariable(VaultEnvironmentVariableNames.Token) ?? VaultConfigurationSource.DefaultVaultToken,
                 Environment.GetEnvironmentVariable(VaultEnvironmentVariableNames.Secret),
                 Environment.GetEnvironmentVariable(VaultEnvironmentVariableNames.RoleId));
-            configuration.Add(new VaultConfigurationSource(vaultOptions, basePath));
+            configuration.Add(new VaultConfigurationSource(vaultOptions, basePath, mountPoint));
             return configuration;
         }
     }

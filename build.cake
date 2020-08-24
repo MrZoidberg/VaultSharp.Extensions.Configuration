@@ -81,7 +81,7 @@ Task("Publish")
     .IsDependentOn("Pack")
     .DoesForEach(GetFiles($"{artefactsDirectory}/*.nupkg"), file =>
     {
-        NuGetPush(file.ToString(), new NuGetPushSettings {
+        DotNetCoreNuGetPush(file.ToString(), new DotNetCoreNuGetPushSettings {
             Source = "https://api.nuget.org/v3/index.json",
             ApiKey = nugetApiKey,
         });

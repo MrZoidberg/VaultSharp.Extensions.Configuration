@@ -21,10 +21,18 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		Key.snk = Key.snk
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documentation", "Documentation", "{7EDFA103-DB69-4C88-9DE4-97ADBF8253A1}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Other Files", "Other Files", "{7EDFA103-DB69-4C88-9DE4-97ADBF8253A1}"
 	ProjectSection(SolutionItems) = preProject
 		LICENSE.md = LICENSE.md
 		README.md = README.md
+		build.cake = build.cake
+		Directory.Build.props = Directory.Build.props
+		Directory.Build.targets = Directory.Build.targets
+		dotnet-tools.json = dotnet-tools.json
+		Gitversion.yml = Gitversion.yml
+		global.json = global.json
+		Key.snk = Key.snk
+		runsettings.xml = runsettings.xml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{E1B24F25-B8A4-46EE-B7EB-7803DCFC543F}"
@@ -63,6 +71,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{
 		.github\workflows\release-drafter.yml = .github\workflows\release-drafter.yml
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SampleWebApp", "Source\SampleWebApp\SampleWebApp.csproj", "{26A6804B-2A4B-4629-89DE-C5476072B4E3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -77,6 +87,10 @@ Global
 		{528E66EB-2232-4534-A20D-9BC8A240BF2F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{528E66EB-2232-4534-A20D-9BC8A240BF2F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{528E66EB-2232-4534-A20D-9BC8A240BF2F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{26A6804B-2A4B-4629-89DE-C5476072B4E3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{26A6804B-2A4B-4629-89DE-C5476072B4E3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{26A6804B-2A4B-4629-89DE-C5476072B4E3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{26A6804B-2A4B-4629-89DE-C5476072B4E3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -88,6 +102,7 @@ Global
 		{528E66EB-2232-4534-A20D-9BC8A240BF2F} = {E1B24F25-B8A4-46EE-B7EB-7803DCFC543F}
 		{EFE1E5ED-D337-4874-82EC-D9FA0BC7D3AB} = {F20E2797-D1E3-4321-91BB-FAE54954D2A0}
 		{841C67EF-BBB2-4730-8E29-22FF3FD54306} = {EFE1E5ED-D337-4874-82EC-D9FA0BC7D3AB}
+		{26A6804B-2A4B-4629-89DE-C5476072B4E3} = {719809C2-A551-4C4A-9EFD-B10FB5E35BC0}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {73F36209-F8D6-4066-8951-D97729F773CF}
