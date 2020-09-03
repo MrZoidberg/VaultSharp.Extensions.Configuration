@@ -62,7 +62,7 @@
                 jtf.RunAsync(
                     async () => { await this.LoadVaultDataAsync(vaultClient).ConfigureAwait(true); }).Join();
             }
-            catch (VaultApiException e)
+            catch (Exception e) when (e is VaultApiException || e is System.Net.Http.HttpRequestException)
             {
                 this._logger?.Log(LogLevel.Error, e, "Cannot load configuration from Vault");
             }
