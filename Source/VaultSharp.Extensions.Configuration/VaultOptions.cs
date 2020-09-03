@@ -12,7 +12,7 @@ namespace VaultSharp.Extensions.Configuration
         /// <param name="vaultToken">Vault token.</param>
         /// <param name="vaultSecret">Vault secret.</param>
         /// <param name="vaultRoleId">Vault Role ID.</param>
-        public VaultOptions(string vaultAddress, string vaultToken, string vaultSecret, string vaultRoleId)
+        public VaultOptions(string vaultAddress, string? vaultToken, string? vaultSecret, string? vaultRoleId)
         {
             this.VaultAddress = vaultAddress;
             this.VaultToken = vaultToken;
