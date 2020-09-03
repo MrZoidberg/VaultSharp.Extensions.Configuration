@@ -1,0 +1,33 @@
+version: '3.8'
+
+x-common-environment-variables: &environment-variables
+  VAULT_ADDR: http://vault:8200
+  VAULT_TOKEN: root
+
+services:
+  sampleapp:
+    image: services/payments
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 8080:80
+    container_name: sample.app
+    environment:
+      <<: *environment-variables
+      WAIT_HOSTS: vault:8200
+    depends_on:
+      - mongo
+      - vault
+
+  vault:
+    image: mikhailmerkulov/vault-dev-docker:latest
+    environment:
+      - VAULT_DEV_ROOT_TOKEN_ID=root
+      - VAULT_UI=true
+    container_name: vault
+    volumes:
+      - ./secrets.json:/opt/secrets.json
+    ports:
+      - 8200:8200
+
