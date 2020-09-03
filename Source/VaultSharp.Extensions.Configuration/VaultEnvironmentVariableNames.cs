@@ -3,7 +3,7 @@ namespace VaultSharp.Extensions.Configuration
     /// <summary>
     /// Class contains all environment variables names related to vault configuration.
     /// </summary>
-    internal static class VaultEnvironmentVariableNames
+    public static class VaultEnvironmentVariableNames
     {
         /// <summary>
         /// Environment variable name for Vault address.
