@@ -52,10 +52,23 @@
         public string MountPoint { get; }
 
         /// <summary>
+        /// Vault change watcher.
+        /// </summary>
+        public VaultChangeWatcher? ChangeWatcher { get; private set; }
+
+        /// <summary>
         /// Build configuration provider.
         /// </summary>
         /// <param name="builder">Configuration builder.</param>
         /// <returns>Instance of <see cref="IConfigurationProvider"/>.</returns>
-        public IConfigurationProvider Build(IConfigurationBuilder builder) => new VaultConfigurationProvider(this, this._logger);
+        public IConfigurationProvider Build(IConfigurationBuilder builder)
+        {
+            if (this.Options.ReloadOnChange)
+            {
+                this.ChangeWatcher = new VaultChangeWatcher(this);
+            }
+
+            return new VaultConfigurationProvider(this, this._logger);
+        }
     }
 }

@@ -2,9 +2,11 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Threading;
     using System.Threading.Tasks;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.Logging;
+    using Microsoft.Extensions.Primitives;
     using Microsoft.VisualStudio.Threading;
     using VaultSharp;
     using VaultSharp.Core;
@@ -21,6 +23,7 @@
         private readonly ILogger? _logger;
 
         private VaultConfigurationSource _source;
+        private IVaultClient? _vaultClient;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="VaultConfigurationProvider"/> class.
@@ -30,7 +33,14 @@
         public VaultConfigurationProvider(VaultConfigurationSource source, ILogger? logger)
         {
             this._logger = logger;
-            this._source = source;
+            this._source = source ?? throw new ArgumentNullException(nameof(source));
+
+            if (source.Options.ReloadOnChange && source.ChangeWatcher != null)
+            {
+                ChangeToken.OnChange(
+                    () => source.ChangeWatcher.Watch(),
+                    this.Load);
+            }
         }
 
         /// <inheritdoc/>
@@ -55,12 +65,12 @@
                 {
                     UseVaultTokenHeaderInsteadOfAuthorizationHeader = true,
                 };
-                IVaultClient vaultClient = new VaultClient(vaultClientSettings);
+                this._vaultClient = new VaultClient(vaultClientSettings);
 
                 using var ctx = new JoinableTaskContext();
                 var jtf = new JoinableTaskFactory(ctx);
                 jtf.RunAsync(
-                    async () => { await this.LoadVaultDataAsync(vaultClient).ConfigureAwait(true); }).Join();
+                    async () => { await this.LoadVaultDataAsync(this._vaultClient).ConfigureAwait(true); }).Join();
             }
             catch (Exception e) when (e is VaultApiException || e is System.Net.Http.HttpRequestException)
             {
