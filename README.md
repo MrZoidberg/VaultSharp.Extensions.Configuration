@@ -59,4 +59,6 @@ All secret data should use JSON format with the only key `value` and secret data
 
 ## Limitations
 
-Currently, only token and AppRole based authentication is supported.
+- Currently, only token and AppRole based authentication is supported.
+- Reload tokens are not supported.
+- TTL of the secrets is not controlled.
