@@ -25,7 +25,7 @@ namespace VaultSharp.Extensions.Configuration.Test
             return testcontainersBuilder.Build();
         }
 
-        private async Task LoadData(Dictionary<string, string> values)
+        private async Task LoadDataAsync(Dictionary<string, string> values)
         {
             var authMethod = new TokenAuthMethodInfo("root");
 
@@ -40,7 +40,7 @@ namespace VaultSharp.Extensions.Configuration.Test
         }
 
         [Fact]
-        public async Task Success_Test()
+        public async Task Success_Test_TokenAuth()
         {
             // arrange
             Dictionary<string, string> values = new Dictionary<string, string>();
@@ -51,7 +51,7 @@ namespace VaultSharp.Extensions.Configuration.Test
             try
             {
                 await container.StartAsync().ConfigureAwait(false);
-                await this.LoadData(values).ConfigureAwait(false);
+                await this.LoadDataAsync(values).ConfigureAwait(false);
 
                 // act
                 ConfigurationBuilder builder = new ConfigurationBuilder();
@@ -68,7 +68,6 @@ namespace VaultSharp.Extensions.Configuration.Test
             {
                 await container.DisposeAsync().ConfigureAwait(false);
             }
-
         }
     }
 }
