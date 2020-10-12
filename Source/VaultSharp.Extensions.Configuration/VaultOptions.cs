@@ -12,7 +12,7 @@ namespace VaultSharp.Extensions.Configuration
         /// <param name="vaultToken">Vault token.</param>
         /// <param name="vaultSecret">Vault secret.</param>
         /// <param name="vaultRoleId">Vault Role ID.</param>
-        public VaultOptions(string vaultAddress, string? vaultToken, string? vaultSecret, string? vaultRoleId)
+        public VaultOptions(string vaultAddress, string? vaultToken, string? vaultSecret = null, string? vaultRoleId = null)
         {
             this.VaultAddress = vaultAddress;
             this.VaultToken = vaultToken;
@@ -26,17 +26,17 @@ namespace VaultSharp.Extensions.Configuration
         public string VaultAddress { get; }
 
         /// <summary>
-        /// Gets Vault access token.
+        /// Gets Vault access token. Used for token-based authentication.
         /// </summary>
         public string? VaultToken { get; }
 
         /// <summary>
-        /// Gets Vault secret.
+        /// Gets Vault secret. Used for role-based authentication.
         /// </summary>
         public string? VaultSecret { get; }
 
         /// <summary>
-        /// Gets Vault role identifier.
+        /// Gets Vault role identifier. Used for role-based authentication.
         /// </summary>
         public string? VaultRoleId { get; }
     }
