@@ -47,13 +47,32 @@ Alternatively, you can configure Vault connection using next environmnt variable
 ## Preparing secrets in Vault
 
 You need to store your secrets with special naming rules.
-First of all, all secrets should use KV2 storage and have prefix `data/{app_alias}/`.
-For example, if your app has alias `sampleapp` and you want to have configuration option `ConnectionString` your secret path would be `data/sampleapp/ConnectionString`.
+First of all, all secrets should use KV2 storage and have prefix `{app_alias}/{env}`.
+For example, if your app has alias `sampleapp` and environment `producton` and you want to have configuration option `ConnectionString` your secret path would be `sampleapp/producton`.
 
-All secret data should use JSON format with the only key `value` and secret data inside:
+All parameters are grouped and arranged in folders and can be managed within the group. All secret data should use JSON format with secret data inside:
 ```json
 {
-    "value": "secret value"
+    "ConnectionString": "secret value",
+    "Option1": "secret value 2",
+}
+```
+### Nested secrets
+
+There are two ways to create nested parameters.
+1. Description of nesting directly in Json format.:
+```json
+{
+    "DB": 
+    {
+        "ConnectionString": "secret value"
+    }
+}
+```
+2. Creating a parameter on the desired path "sampleapp/producton/DB":
+```json
+{
+    "ConnectionString": "secret value"
 }
 ```
 
