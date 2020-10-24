@@ -1,4 +1,4 @@
-﻿namespace VaultSharp.Extensions.Configuration
+namespace VaultSharp.Extensions.Configuration
 {
     using System;
     using System.Collections.Generic;
@@ -6,6 +6,7 @@
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.Logging;
     using Microsoft.VisualStudio.Threading;
+    using Newtonsoft.Json.Linq;
     using VaultSharp;
     using VaultSharp.Core;
     using VaultSharp.V1.AuthMethods;
@@ -73,11 +74,54 @@
             await foreach (var secretData in this.ReadKeysAsync(vaultClient, this._source.BasePath))
             {
                 var key = secretData.Key;
-                key = key.Replace(this._source.BasePath, string.Empty, StringComparison.InvariantCultureIgnoreCase)
+                key = key.Replace(this._source.BasePath, string.Empty, StringComparison.InvariantCultureIgnoreCase).TrimStart('/')
                     .Replace('/', ':');
-                if (secretData.SecretData.Data.ContainsKey("value"))
+                var data = secretData.SecretData.Data;
+
+                this.SetData(data, key);
+            }
+        }
+
+        private void SetData<TValue>(IEnumerable<KeyValuePair<string, TValue>> data, string key)
+        {
+            foreach (var pair in data)
+            {
+                var nestedKey = string.IsNullOrEmpty(key) ? pair.Key : $"{key}:{pair.Key}";
+                var nestedValue = pair.Value;
+                switch (nestedValue)
                 {
-                    this.Set(key, secretData.SecretData.Data["value"].ToString());
+                    case string sValue:
+                        this.Set(nestedKey, sValue);
+                        break;
+                    case JToken token:
+                        switch (token.Type)
+                        {
+                            case JTokenType.Object:
+                                this.SetData<JToken?>(token.Value<JObject>(), nestedKey);
+                                break;
+                            case JTokenType.String:
+                                this.Set(nestedKey, token.Value<string>());
+                                break;
+                            case JTokenType.None:
+                            case JTokenType.Array:
+                            case JTokenType.Constructor:
+                            case JTokenType.Property:
+                            case JTokenType.Comment:
+                            case JTokenType.Integer:
+                            case JTokenType.Float:
+                            case JTokenType.Boolean:
+                            case JTokenType.Null:
+                            case JTokenType.Undefined:
+                            case JTokenType.Date:
+                            case JTokenType.Raw:
+                            case JTokenType.Bytes:
+                            case JTokenType.Guid:
+                            case JTokenType.Uri:
+                            case JTokenType.TimeSpan:
+                                break;
+                        }
+
+                        break;
                 }
             }
         }
@@ -85,9 +129,15 @@
         private async IAsyncEnumerable<KeyedSecretData> ReadKeysAsync(IVaultClient vaultClient, string path)
         {
             Secret<ListInfo>? keys = null;
+            var folderPath = path;
+            if (folderPath.EndsWith("/", StringComparison.InvariantCulture) == false)
+            {
+                folderPath += "/";
+            }
+
             try
             {
-                keys = await vaultClient.V1.Secrets.KeyValue.V2.ReadSecretPathsAsync(path, this._source.MountPoint).ConfigureAwait(false);
+                keys = await vaultClient.V1.Secrets.KeyValue.V2.ReadSecretPathsAsync(folderPath, this._source.MountPoint).ConfigureAwait(false);
             }
             catch (VaultApiException)
             {
@@ -98,18 +148,34 @@
             {
                 foreach (var key in keys.Data.Keys)
                 {
-                    var keyData = this.ReadKeysAsync(vaultClient, path + key);
+                    var keyData = this.ReadKeysAsync(vaultClient, folderPath + key);
                     await foreach (var secretData in keyData)
                     {
                         yield return secretData;
                     }
                 }
             }
-            else
+
+            var valuePath = path;
+            if (valuePath.EndsWith("/", StringComparison.InvariantCulture) == true)
             {
-                var secretData =
-                    await vaultClient.V1.Secrets.KeyValue.V2.ReadSecretAsync(path, null, this._source.MountPoint).ConfigureAwait(false);
-                yield return new KeyedSecretData(path, secretData.Data);
+                valuePath = valuePath.TrimEnd('/');
+            }
+
+            KeyedSecretData? keyedSecretData = null;
+            try
+            {
+                var secretData = await vaultClient.V1.Secrets.KeyValue.V2.ReadSecretAsync(valuePath, null, this._source.MountPoint).ConfigureAwait(false);
+                keyedSecretData = new KeyedSecretData(valuePath, secretData.Data);
+            }
+            catch (VaultApiException)
+            {
+                // this is folder, not a key 
+            }
+
+            if (keyedSecretData != null)
+            {
+                yield return keyedSecretData;
             }
         }
 

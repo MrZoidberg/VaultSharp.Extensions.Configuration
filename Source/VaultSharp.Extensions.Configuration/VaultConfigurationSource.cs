@@ -1,4 +1,4 @@
-﻿namespace VaultSharp.Extensions.Configuration
+namespace VaultSharp.Extensions.Configuration
 {
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.Logging;
@@ -32,7 +32,7 @@
         {
             this._logger = logger;
             this.Options = options;
-            this.BasePath = "data/" + basePath + "/";
+            this.BasePath = basePath;
             this.MountPoint = mountPoint ?? SecretsEngineDefaultPaths.KeyValueV2;
         }
 

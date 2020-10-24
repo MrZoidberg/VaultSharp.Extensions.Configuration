@@ -25,7 +25,7 @@ namespace VaultSharp.Extensions.Configuration.Test
             return testcontainersBuilder.Build();
         }
 
-        private async Task LoadDataAsync(Dictionary<string, string> values)
+        private async Task LoadDataAsync(Dictionary<string, KeyValuePair<string,string>> values)
         {
             var authMethod = new TokenAuthMethodInfo("root");
 
@@ -34,7 +34,7 @@ namespace VaultSharp.Extensions.Configuration.Test
 
             foreach (var pair in values)
             {
-                var data = new Dictionary<string, object>() { ["value"] = pair.Value };
+                var data = new Dictionary<string, object>() { [pair.Value.Key] = pair.Value.Value };
                 await vaultClient.V1.Secrets.KeyValue.V2.WriteSecretAsync(pair.Key, data).ConfigureAwait(false);
             }
         }
@@ -43,9 +43,9 @@ namespace VaultSharp.Extensions.Configuration.Test
         public async Task Success_Test_TokenAuth()
         {
             // arrange
-            Dictionary<string, string> values = new Dictionary<string, string>();
-            values.Add("data/test/option1", "value1");
-            values.Add("data/test/subsection/option2", "value2");
+            Dictionary<string, KeyValuePair<string,string>> values = new Dictionary<string, KeyValuePair<string,string>>();
+            values.Add("test", new KeyValuePair<string, string>("option1", "value1"));
+            values.Add("test/subsection", new KeyValuePair<string, string>("option2", "value2"));
 
             var container = this.PrepareVaultContainer();
             try
@@ -60,9 +60,8 @@ namespace VaultSharp.Extensions.Configuration.Test
                 var configurationRoot = builder.Build();
 
                 // assert
-                configurationRoot.GetValue<string>("option1").Should().Be(values["data/test/option1"]);
-                configurationRoot.GetSection("subsection").GetValue<string>("option2").Should()
-                    .Be(values["data/test/subsection/option2"]);
+                configurationRoot.GetValue<string>("option1").Should().Be("value1");
+                configurationRoot.GetSection("subsection").GetValue<string>("option2").Should().Be("value2");
             }
             finally
             {
