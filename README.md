@@ -62,6 +62,10 @@ public void ConfigureServices(IServiceCollection services)
 }
 ```
 
+Later in your services you can track changes in app configuration using `IOptionsSnapshot` or `IOptionsMonitor`.
+Keep in mind that your service should be registered as scoped or transient to receive updates.
+Also `IOptionsSnapshot` can return empty value in some cases ([it's .net core bug](https://github.com/dotnet/runtime/issues/37860))
+
 ## Configuration using environmnt variables
 
 Alternatively, you can configure Vault connection using next environmnt variables:
