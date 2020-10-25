@@ -22,7 +22,14 @@ namespace SampleWebApp
                             $"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development"}.json",
                             optional: true)
                         .AddEnvironmentVariables()
-                        .AddVaultConfiguration("sampleapp", "secret");
+                        .AddVaultConfiguration(
+                            () => new VaultOptions(
+                                "htpp://localhost:8200",
+                                "root",
+                                reloadOnChange: true,
+                                reloadCheckIntervalSeconds: 60),
+                            "sampleapp",
+                            "secret");
                 })
                 .ConfigureWebHostDefaults(webBuilder =>
                 {

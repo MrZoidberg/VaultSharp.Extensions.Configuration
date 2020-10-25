@@ -35,6 +35,33 @@ The `AddVaultConfiguration` method accepts several parameters:
 
 3. Mount point of KV secrets. The default value is `secret` (optional).
 
+## Monitoring for changes
+
+You can enable monitoring of changes in Vault data and automatic reload by setting `VaultOptions.ReloadOnChange` to `true`.
+The default check interval is 5 minutes, but can be configured.
+Data is checked using version information from key metadata.
+
+```csharp
+config.AddVaultConfiguration(
+        () => new VaultOptions(
+            "htpp://localhost:8200",
+            "root",
+            reloadOnChange: true,
+            reloadCheckIntervalSeconds: 60),
+        "sampleapp",
+        "secret");
+```
+
+Also you would need to register hosted services `VaultChangeWatcher` in your `Startup.cs` that will check Vault data for updates:
+
+```csharp
+public void ConfigureServices(IServiceCollection services)
+{
+    services.AddControllers();
+    services.AddHostedService<VaultChangeWatcher>();
+}
+```
+
 ## Configuration using environmnt variables
 
 Alternatively, you can configure Vault connection using next environmnt variables:
@@ -47,20 +74,25 @@ Alternatively, you can configure Vault connection using next environmnt variable
 ## Preparing secrets in Vault
 
 You need to store your secrets with special naming rules.
-First of all, all secrets should use KV2 storage and have prefix `{app_alias}/{env}`.
-For example, if your app has alias `sampleapp` and environment `producton` and you want to have configuration option `ConnectionString` your secret path would be `sampleapp/producton`.
+First of all, all secrets should use KV2 storage and have prefix `{app_alias}` or `{app_alias}/{env}`.
+
+For example, if your app has alias `sampleapp` and environment `producton` and you want to have configuration option `ConnectionString` your secret path would be or `sampleapp` or `sampleapp/producton`.
 
 All parameters are grouped and arranged in folders and can be managed within the group. All secret data should use JSON format with secret data inside:
+
 ```json
 {
     "ConnectionString": "secret value",
     "Option1": "secret value 2",
 }
 ```
+
 ### Nested secrets
 
 There are two ways to create nested parameters.
-1. Description of nesting directly in Json format.:
+
+1. Description of nesting directly in Json format:
+
 ```json
 {
     "DB": 
@@ -69,7 +101,9 @@ There are two ways to create nested parameters.
     }
 }
 ```
-2. Creating a parameter on the desired path "sampleapp/producton/DB":
+
+1. Creating a parameter on the desired path "sampleapp/producton/DB":
+
 ```json
 {
     "ConnectionString": "secret value"
@@ -81,3 +115,9 @@ There are two ways to create nested parameters.
 - Currently, only token and AppRole based authentication is supported.
 - Reload tokens are not supported.
 - TTL of the secrets is not controlled.
+
+## Contributing
+
+Before starting work on a pull request, I suggest commenting on, or raising, an issue on the issue tracker so that we can help and coordinate efforts.
+
+To run tests locally you need to have Docker running and have Vault's default port 8200 free.
