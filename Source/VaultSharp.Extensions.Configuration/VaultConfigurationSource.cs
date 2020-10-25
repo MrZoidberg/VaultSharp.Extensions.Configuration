@@ -7,7 +7,7 @@ namespace VaultSharp.Extensions.Configuration
     /// <summary>
     /// Vault configuration source.
     /// </summary>
-    public class VaultConfigurationSource : IConfigurationSource
+    public sealed class VaultConfigurationSource : IConfigurationSource
     {
         /// <summary>
         /// Default Vault URL.
@@ -52,23 +52,10 @@ namespace VaultSharp.Extensions.Configuration
         public string MountPoint { get; }
 
         /// <summary>
-        /// Vault change watcher.
-        /// </summary>
-        public VaultChangeWatcher? ChangeWatcher { get; private set; }
-
-        /// <summary>
         /// Build configuration provider.
         /// </summary>
         /// <param name="builder">Configuration builder.</param>
         /// <returns>Instance of <see cref="IConfigurationProvider"/>.</returns>
-        public IConfigurationProvider Build(IConfigurationBuilder builder)
-        {
-            if (this.Options.ReloadOnChange)
-            {
-                this.ChangeWatcher = new VaultChangeWatcher(this);
-            }
-
-            return new VaultConfigurationProvider(this, this._logger);
-        }
+        public IConfigurationProvider Build(IConfigurationBuilder builder) => new VaultConfigurationProvider(this, this._logger);
     }
 }

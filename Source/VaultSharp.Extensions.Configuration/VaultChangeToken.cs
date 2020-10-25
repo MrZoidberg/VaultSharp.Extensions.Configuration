@@ -1,17 +1,31 @@
 namespace VaultSharp.Extensions.Configuration
 {
     using System;
+    using System.Threading;
     using Microsoft.Extensions.Primitives;
-
-    internal class VaultChangeToken : IChangeToken
+/*
+    /// <summary>
+    /// Implements <see cref="IChangeToken"/>.
+    /// </summary>
+    public class VaultChangeToken : IChangeToken, IDisposable
     {
-        public IDisposable RegisterChangeCallback(Action<object> callback, object state)
-        {
-            throw new NotImplementedException();
-        }
+        private CancellationTokenSource _cts = new CancellationTokenSource();
 
-        public bool HasChanged { get; internal set; }
+        /// <inheritdoc />
+        public bool HasChanged => this._cts.IsCancellationRequested;
 
+        /// <inheritdoc />
         public bool ActiveChangeCallbacks => true;
-    }
+
+        /// <inheritdoc />
+        public IDisposable RegisterChangeCallback(Action<object> callback, object state) => this._cts.Token.Register(callback, state);
+
+        /// <summary>
+        /// Used to trigger the change token when a reload occurs.
+        /// </summary>
+        public void OnReload() => this._cts.Cancel();
+
+        /// <inheritdoc/>
+        public void Dispose() => this._cts.Dispose();
+    }*/
 }

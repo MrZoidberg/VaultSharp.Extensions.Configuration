@@ -31,7 +31,7 @@ namespace VaultSharp.Extensions.Configuration
         }
 
         /// <summary>
-        /// Gets or sets Vault URL address.
+        /// Gets Vault URL address.
         /// </summary>
         public string VaultAddress { get; }
 
@@ -51,13 +51,13 @@ namespace VaultSharp.Extensions.Configuration
         public string? VaultRoleId { get; }
 
         /// <summary>
-        /// Gets value indicating that secrets should be re-read when they are changed in Vault.
+        /// Gets a value indicating whether gets value indicating that secrets should be re-read when they are changed in Vault.
         /// In this case Reload token will be triggered.
         /// </summary>
         public bool ReloadOnChange { get; }
 
         /// <summary>
-        /// Interval in seconds to check Vault for any changes.
+        /// Gets interval in seconds to check Vault for any changes.
         /// </summary>
         public int ReloadCheckIntervalSeconds { get; }
     }

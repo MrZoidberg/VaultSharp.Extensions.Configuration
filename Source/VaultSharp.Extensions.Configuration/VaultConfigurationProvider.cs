@@ -2,11 +2,9 @@ namespace VaultSharp.Extensions.Configuration
 {
     using System;
     using System.Collections.Generic;
-    using System.Threading;
     using System.Threading.Tasks;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.Logging;
-    using Microsoft.Extensions.Primitives;
     using Microsoft.VisualStudio.Threading;
     using Newtonsoft.Json.Linq;
     using VaultSharp;
@@ -25,6 +23,7 @@ namespace VaultSharp.Extensions.Configuration
 
         private VaultConfigurationSource _source;
         private IVaultClient? _vaultClient;
+        private Dictionary<string, int> _versionsCache;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="VaultConfigurationProvider"/> class.
@@ -35,43 +34,49 @@ namespace VaultSharp.Extensions.Configuration
         {
             this._logger = logger;
             this._source = source ?? throw new ArgumentNullException(nameof(source));
-
-            if (source.Options.ReloadOnChange && source.ChangeWatcher != null)
-            {
-                ChangeToken.OnChange(
-                    () => source.ChangeWatcher.Watch(),
-                    this.Load);
-            }
+            this._versionsCache = new Dictionary<string, int>();
         }
+
+        /// <summary>
+        /// Gets <see cref="VaultConfigurationSource"/>.
+        /// </summary>
+        internal VaultConfigurationSource ConfigurationSource => this._source;
 
         /// <inheritdoc/>
         public override void Load()
         {
             try
             {
-                IAuthMethodInfo authMethod;
-                if (!string.IsNullOrEmpty(this._source.Options.VaultRoleId) &&
-                    !string.IsNullOrEmpty(this._source.Options.VaultSecret))
+                if (this._vaultClient == null)
                 {
-                    authMethod = new AppRoleAuthMethodInfo(
-                        this._source.Options.VaultRoleId,
-                        this._source.Options.VaultSecret);
-                }
-                else
-                {
-                    authMethod = new TokenAuthMethodInfo(this._source.Options.VaultToken);
-                }
+                    IAuthMethodInfo authMethod;
+                    if (!string.IsNullOrEmpty(this._source.Options.VaultRoleId) &&
+                        !string.IsNullOrEmpty(this._source.Options.VaultSecret))
+                    {
+                        this._logger?.LogDebug("VaultConfigurationProvider: using AppRole authentication");
+                        authMethod = new AppRoleAuthMethodInfo(
+                            this._source.Options.VaultRoleId,
+                            this._source.Options.VaultSecret);
+                    }
+                    else
+                    {
+                        this._logger?.LogDebug("VaultConfigurationProvider: using Token authentication");
+                        authMethod = new TokenAuthMethodInfo(this._source.Options.VaultToken);
+                    }
 
-                var vaultClientSettings = new VaultClientSettings(this._source.Options.VaultAddress, authMethod)
-                {
-                    UseVaultTokenHeaderInsteadOfAuthorizationHeader = true,
-                };
-                this._vaultClient = new VaultClient(vaultClientSettings);
+                    var vaultClientSettings = new VaultClientSettings(this._source.Options.VaultAddress, authMethod)
+                    {
+                        UseVaultTokenHeaderInsteadOfAuthorizationHeader = true,
+                    };
+                    this._vaultClient = new VaultClient(vaultClientSettings);
+                }
 
                 using var ctx = new JoinableTaskContext();
                 var jtf = new JoinableTaskFactory(ctx);
                 jtf.RunAsync(
                     async () => { await this.LoadVaultDataAsync(this._vaultClient).ConfigureAwait(true); }).Join();
+
+                this.OnReload();
             }
             catch (Exception e) when (e is VaultApiException || e is System.Net.Http.HttpRequestException)
             {
@@ -83,12 +88,26 @@ namespace VaultSharp.Extensions.Configuration
         {
             await foreach (var secretData in this.ReadKeysAsync(vaultClient, this._source.BasePath))
             {
+                this._logger?.LogDebug($"VaultConfigurationProvider: got Vault data with key `{secretData.Key}`");
+
                 var key = secretData.Key;
                 key = key.Replace(this._source.BasePath, string.Empty, StringComparison.InvariantCultureIgnoreCase).TrimStart('/')
                     .Replace('/', ':');
                 var data = secretData.SecretData.Data;
 
-                this.SetData(data, key);
+                var shouldSetValue = true;
+                if (this._versionsCache.TryGetValue(key, out var currentVersion))
+                {
+                    shouldSetValue = secretData.SecretData.Metadata.Version > currentVersion;
+                    string keyMsg = shouldSetValue ? "has new version" : "is outdated";
+                    this._logger?.LogDebug($"VaultConfigurationProvider: Data for key `{secretData.Key}` {keyMsg}");
+                }
+
+                if (shouldSetValue)
+                {
+                    this.SetData(data, key);
+                    this._versionsCache[key] = secretData.SecretData.Metadata.Version;
+                }
             }
         }
 
@@ -175,12 +194,13 @@ namespace VaultSharp.Extensions.Configuration
             KeyedSecretData? keyedSecretData = null;
             try
             {
-                var secretData = await vaultClient.V1.Secrets.KeyValue.V2.ReadSecretAsync(valuePath, null, this._source.MountPoint).ConfigureAwait(false);
+                var secretData = await vaultClient.V1.Secrets.KeyValue.V2.ReadSecretAsync(valuePath, null, this._source.MountPoint)
+                    .ConfigureAwait(false);
                 keyedSecretData = new KeyedSecretData(valuePath, secretData.Data);
             }
             catch (VaultApiException)
             {
-                // this is folder, not a key 
+                // this is folder, not a key
             }
 
             if (keyedSecretData != null)
