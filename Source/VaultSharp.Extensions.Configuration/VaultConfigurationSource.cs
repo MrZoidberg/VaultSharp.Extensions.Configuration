@@ -7,7 +7,7 @@ namespace VaultSharp.Extensions.Configuration
     /// <summary>
     /// Vault configuration source.
     /// </summary>
-    public class VaultConfigurationSource : IConfigurationSource
+    public sealed class VaultConfigurationSource : IConfigurationSource
     {
         /// <summary>
         /// Default Vault URL.

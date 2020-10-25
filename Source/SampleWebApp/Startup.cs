@@ -5,6 +5,7 @@ namespace SampleWebApp
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Hosting;
+    using VaultSharp.Extensions.Configuration;
 
     public class Startup
     {
@@ -19,6 +20,7 @@ namespace SampleWebApp
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
+            services.AddHostedService<VaultChangeWatcher>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
