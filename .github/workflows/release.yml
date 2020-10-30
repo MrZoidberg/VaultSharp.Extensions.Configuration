@@ -21,7 +21,7 @@ jobs:
     - name: 'Install .NET Core SDK'
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: 3.1.301
+        dotnet-version: 3.1.x
     - name: 'Dotnet Tool Restore'
       run: dotnet tool restore
       shell: pwsh
@@ -34,7 +34,7 @@ jobs:
     - name: 'Dotnet Cake Pack'
       run: dotnet cake --target=Pack
       shell: pwsh
-    - name: 'Dotnet Cacke Publish'
+    - name: 'Dotnet Cake Publish'
       run: dotnet cake --target=Publish --nuget-key="${{secrets.NUGET_API_KEY}}"
       shell: pwsh
     - name: 'Publish Code Coverage'
