@@ -24,7 +24,7 @@ namespace SampleWebApp
                         .AddEnvironmentVariables()
                         .AddVaultConfiguration(
                             () => new VaultOptions(
-                                "htpp://localhost:8200",
+                                "http://localhost:8200",
                                 "root",
                                 reloadOnChange: true,
                                 reloadCheckIntervalSeconds: 60),
