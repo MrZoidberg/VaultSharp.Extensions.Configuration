@@ -117,7 +117,6 @@ There are two ways to create nested parameters.
 ## Limitations
 
 - Currently, only token and AppRole based authentication is supported.
-- Reload tokens are not supported.
 - TTL of the secrets is not controlled.
 
 ## Contributing
