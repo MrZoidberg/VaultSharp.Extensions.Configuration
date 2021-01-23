@@ -138,18 +138,31 @@ namespace VaultSharp.Extensions.Configuration
                             case JTokenType.Object:
                                 this.SetData<JToken?>(token.Value<JObject>(), nestedKey);
                                 break;
-                            case JTokenType.String:
-                                this.Set(nestedKey, token.Value<string>());
-                                break;
                             case JTokenType.None:
                             case JTokenType.Array:
-                            case JTokenType.Constructor:
+                                var array = (JArray)token;
+                                for (var i = 0; i < array.Count; i++)
+                                {
+                                    if (array[i].Type == JTokenType.Array)
+                                    {
+                                        this.SetData<JToken?>(array[i].Value<JObject>(), $"{nestedKey}:{i}");
+                                    }
+                                    else if (array[i].Type == JTokenType.Object)
+                                    {
+                                        this.SetData<JToken?>(array[i].Value<JObject>(), $"{nestedKey}:{i}");
+                                    }
+                                    else
+                                    {
+                                        this.Set($"{nestedKey}:{i}", array[i].Value<string>());
+                                    }
+                                }
+
+                                break;
+
                             case JTokenType.Property:
-                            case JTokenType.Comment:
                             case JTokenType.Integer:
                             case JTokenType.Float:
                             case JTokenType.Boolean:
-                            case JTokenType.Null:
                             case JTokenType.Undefined:
                             case JTokenType.Date:
                             case JTokenType.Raw:
@@ -157,6 +170,8 @@ namespace VaultSharp.Extensions.Configuration
                             case JTokenType.Guid:
                             case JTokenType.Uri:
                             case JTokenType.TimeSpan:
+                            case JTokenType.String:
+                                this.Set(nestedKey, token.Value<string>());
                                 break;
                         }
 

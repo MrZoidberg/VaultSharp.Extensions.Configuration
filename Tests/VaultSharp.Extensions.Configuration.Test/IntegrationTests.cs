@@ -72,15 +72,26 @@ namespace VaultSharp.Extensions.Configuration.Test
                 new Dictionary<string, IEnumerable<KeyValuePair<string, object>>>
                 {
                     {
-                        "test",
-                        new[]
+                        "test", new[]
                         {
                             new KeyValuePair<string, object>("option1", "value1"),
                             new KeyValuePair<string, object>("option3", 5),
                             new KeyValuePair<string, object>("option4", true),
+                            new KeyValuePair<string, object>("option5", new[] {"v1", "v2", "v3"}),
+                            new KeyValuePair<string, object>("option6",
+                                new[]
+                                {
+                                    new TestConfigObject() {OptionA = "a1", OptionB = "b1"},
+                                    new TestConfigObject() {OptionA = "a2", OptionB = "b2"},
+                                }),
                         }
                     },
-                    {"test/subsection", new[] {new KeyValuePair<string, object>("option2", "value2"),}},
+                    {
+                        "test/subsection", new[]
+                        {
+                            new KeyValuePair<string, object>("option2", "value2"),
+                        }
+                    },
                 };
 
             var container = this.PrepareVaultContainer();
@@ -102,6 +113,17 @@ namespace VaultSharp.Extensions.Configuration.Test
                 configurationRoot.GetValue<string>("option1").Should().Be("value1");
                 configurationRoot.GetValue<int>("option3").Should().Be(5);
                 configurationRoot.GetValue<bool>("option4").Should().Be(true);
+                configurationRoot.GetValue<string>("option5:0").Should().Be("v1");
+                configurationRoot.GetValue<string>("option5:1").Should().Be("v2");
+                configurationRoot.GetValue<string>("option5:2").Should().Be("v3");
+                var t1 = new TestConfigObject();
+                configurationRoot.Bind("option6:0", t1);
+                t1.OptionA.Should().Be("a1");
+                t1.OptionB.Should().Be("b1");
+                var t2 = new TestConfigObject();
+                configurationRoot.Bind("option6:1", t2);
+                t2.OptionA.Should().Be("a2");
+                t2.OptionB.Should().Be("b2");
                 configurationRoot.GetSection("subsection").GetValue<string>("option2").Should().Be("value2");
             }
             finally
@@ -151,27 +173,9 @@ namespace VaultSharp.Extensions.Configuration.Test
                 // load new data and wait for reload
                 values = new Dictionary<string, IEnumerable<KeyValuePair<string, object>>>
                 {
-                    {
-                        "test",
-                        new[]
-                        {
-                            new KeyValuePair<string, object>("option1", "value1_new"),
-                        }
-                    },
-                    {
-                        "test/subsection",
-                        new[]
-                        {
-                            new KeyValuePair<string, object>("option2", "value2_new"),
-                        }
-                    },
-                    {
-                        "test/subsection3",
-                        new[]
-                        {
-                            new KeyValuePair<string, object>("option3", "value3_new"),
-                        }
-                    },
+                    {"test", new[] {new KeyValuePair<string, object>("option1", "value1_new"),}},
+                    {"test/subsection", new[] {new KeyValuePair<string, object>("option2", "value2_new"),}},
+                    {"test/subsection3", new[] {new KeyValuePair<string, object>("option3", "value3_new"),}},
                 };
                 await this.LoadDataAsync(values).ConfigureAwait(false);
                 await Task.Delay(TimeSpan.FromSeconds(15)).ConfigureAwait(true);
@@ -189,5 +193,12 @@ namespace VaultSharp.Extensions.Configuration.Test
                 await container.DisposeAsync().ConfigureAwait(false);
             }
         }
+    }
+
+    public class TestConfigObject
+    {
+        public string OptionA { get; set; }
+
+        public string OptionB { get; set; }
     }
 }
