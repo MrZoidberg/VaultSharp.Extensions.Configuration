@@ -2,6 +2,7 @@ namespace VaultSharp.Extensions.Configuration
 {
     using System;
     using System.Collections.Generic;
+    using System.Globalization;
     using System.Threading.Tasks;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.Logging;
@@ -121,6 +122,15 @@ namespace VaultSharp.Extensions.Configuration
                 {
                     case string sValue:
                         this.Set(nestedKey, sValue);
+                        break;
+                    case int intValue:
+                        this.Set(nestedKey, intValue.ToString(CultureInfo.InvariantCulture));
+                        break;
+                    case long longValue:
+                        this.Set(nestedKey, longValue.ToString(CultureInfo.InvariantCulture));
+                        break;
+                    case bool boolValue:
+                        this.Set(nestedKey, boolValue.ToString(CultureInfo.InvariantCulture));
                         break;
                     case JToken token:
                         switch (token.Type)
