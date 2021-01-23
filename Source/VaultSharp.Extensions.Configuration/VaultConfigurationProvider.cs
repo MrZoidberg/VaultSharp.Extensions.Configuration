@@ -133,20 +133,47 @@ namespace VaultSharp.Extensions.Configuration
                                 break;
                             case JTokenType.None:
                             case JTokenType.Array:
+                                var array = (JArray)token;
+                                for (var i = 0; i < array.Count; i++)
+                                {
+                                    if (array[i].Type == JTokenType.Array)
+                                    {
+                                        this.SetData<JToken?>(array[i].Value<JObject>(), $"{nestedKey}:{i}");
+                                    }
+                                    else
+                                    {
+                                        this.Set($"{nestedKey}:{i}", array[i].Value<string>());
+                                    }
+                                }
+
+                                break;
                             case JTokenType.Constructor:
                             case JTokenType.Property:
                             case JTokenType.Comment:
                             case JTokenType.Integer:
+                                this.Set(nestedKey, token.Value<string>());
+                                break;
                             case JTokenType.Float:
+                                this.Set(nestedKey, token.Value<string>());
+                                break;
                             case JTokenType.Boolean:
+                                this.Set(nestedKey, token.Value<string>());
+                                break;
                             case JTokenType.Null:
                             case JTokenType.Undefined:
                             case JTokenType.Date:
+                                this.Set(nestedKey, token.Value<string>());
+                                break;
                             case JTokenType.Raw:
                             case JTokenType.Bytes:
                             case JTokenType.Guid:
+                                this.Set(nestedKey, token.Value<string>());
+                                break;
                             case JTokenType.Uri:
+                                this.Set(nestedKey, token.Value<string>());
+                                break;
                             case JTokenType.TimeSpan:
+                                this.Set(nestedKey, token.Value<string>());
                                 break;
                         }
 
