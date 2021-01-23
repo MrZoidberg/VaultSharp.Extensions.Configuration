@@ -105,7 +105,8 @@ namespace VaultSharp.Extensions.Configuration
 
                 if (shouldSetValue)
                 {
-                    this.SetData(data, key);
+                    this.SetData(data, this.ConfigurationSource.Options.OmitVaultKeyName ? string.Empty : key);
+
                     this._versionsCache[key] = secretData.SecretData.Metadata.Version;
                 }
             }
