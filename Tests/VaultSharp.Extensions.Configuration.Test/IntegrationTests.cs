@@ -10,6 +10,7 @@ namespace VaultSharp.Extensions.Configuration.Test
     using FluentAssertions;
     using Microsoft.Extensions.Configuration;
     using Microsoft.VisualStudio.TestPlatform.TestHost;
+    using Newtonsoft.Json;
     using Serilog;
     using Serilog.Core;
     using Serilog.Extensions.Logging;
@@ -58,6 +59,17 @@ namespace VaultSharp.Extensions.Configuration.Test
             }
         }
 
+        private async Task LoadDataAsync(string secretPath, string jsonData)
+        {
+            var authMethod = new TokenAuthMethodInfo("root");
+
+            var vaultClientSettings = new VaultClientSettings("http://localhost:8200", authMethod);
+            IVaultClient vaultClient = new VaultClient(vaultClientSettings);
+
+            var dictionary = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonData);
+            await vaultClient.V1.Secrets.KeyValue.V2.WriteSecretAsync(secretPath, dictionary).ConfigureAwait(false);
+        }
+
         [Fact]
         public async Task Success_SimpleTest_TokenAuth()
         {
@@ -80,6 +92,35 @@ namespace VaultSharp.Extensions.Configuration.Test
                 builder.AddVaultConfiguration(
                     () => new VaultOptions("http://localhost:8200", "root"),
                     "test",
+                    "secret",
+                    this._logger);
+                var configurationRoot = builder.Build();
+
+                // assert
+                configurationRoot.GetValue<string>("option1").Should().Be("value1");
+                configurationRoot.GetSection("subsection").GetValue<string>("option2").Should().Be("value2");
+            }
+            finally
+            {
+                await container.DisposeAsync().ConfigureAwait(false);
+            }
+        }
+
+        [Fact]
+        public async Task Success_SimpleTestOmitVaultKey_TokenAuth()
+        {
+            string jsonData = @"{""option1"": ""value1"",""subsection"":{""option2"": ""value2""}}";
+            var container = this.PrepareVaultContainer();
+            try
+            {
+                await container.StartAsync().ConfigureAwait(false);
+                await this.LoadDataAsync("myservice-config", jsonData).ConfigureAwait(false);
+
+                // act
+                ConfigurationBuilder builder = new ConfigurationBuilder();
+                builder.AddVaultConfiguration(
+                    () => new VaultOptions("http://localhost:8200", "root", omitVaultKeyName: true),
+                    "myservice-config",
                     "secret",
                     this._logger);
                 var configurationRoot = builder.Build();
@@ -154,5 +195,58 @@ namespace VaultSharp.Extensions.Configuration.Test
                 await container.DisposeAsync().ConfigureAwait(false);
             }
         }
+
+        [Fact]
+        public async Task Success_WatcherTest_OmitVaultKey_TokenAuth()
+        {
+            // arrange
+            using CancellationTokenSource cts = new CancellationTokenSource();
+            string jsonData = @"{""option1"": ""value1"",""subsection"":{""option2"": ""value2""}}";
+
+            var container = this.PrepareVaultContainer();
+            try
+            {
+                await container.StartAsync().ConfigureAwait(false);
+                await this.LoadDataAsync("myservice-config", jsonData).ConfigureAwait(false);
+
+
+                // act
+                ConfigurationBuilder builder = new ConfigurationBuilder();
+                builder.AddVaultConfiguration(
+                    () => new VaultOptions("http://localhost:8200", "root", reloadOnChange: true, reloadCheckIntervalSeconds: 10, omitVaultKeyName: true),
+                    "myservice-config",
+                    "secret",
+                    this._logger);
+                var configurationRoot = builder.Build();
+                VaultChangeWatcher changeWatcher = new VaultChangeWatcher(configurationRoot, this._logger);
+                await changeWatcher.StartAsync(cts.Token).ConfigureAwait(false);
+                var reloadToken = configurationRoot.GetReloadToken();
+
+                // assert
+                configurationRoot.GetValue<string>("option1").Should().Be("value1");
+                configurationRoot.GetSection("subsection").GetValue<string>("option2").Should().Be("value2");
+                reloadToken.HasChanged.Should().BeFalse();
+
+                // load new data and wait for reload
+                jsonData =
+                    @"{""option1"": ""value1_new"",""subsection"": {""option2"": ""value2_new""},""subsection3"": {""option3"": ""value3_new""}}";
+
+                await this.LoadDataAsync("myservice-config", jsonData).ConfigureAwait(false);
+                await Task.Delay(TimeSpan.FromSeconds(15)).ConfigureAwait(true);
+
+                reloadToken.HasChanged.Should().BeTrue();
+                configurationRoot.GetValue<string>("option1").Should().Be("value1_new");
+                configurationRoot.GetSection("subsection").GetValue<string>("option2").Should().Be("value2_new");
+                configurationRoot.GetSection("subsection3").GetValue<string>("option3").Should().Be("value3_new");
+
+                changeWatcher.Dispose();
+            }
+            finally
+            {
+                cts.Cancel();
+                await container.DisposeAsync().ConfigureAwait(false);
+            }
+        }
+
     }
 }
