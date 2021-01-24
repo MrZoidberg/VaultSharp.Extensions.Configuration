@@ -2,6 +2,7 @@ namespace VaultSharp.Extensions.Configuration
 {
     using System;
     using System.Collections.Generic;
+    using System.Globalization;
     using System.Threading.Tasks;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.Logging;
@@ -122,24 +123,46 @@ namespace VaultSharp.Extensions.Configuration
                     case string sValue:
                         this.Set(nestedKey, sValue);
                         break;
+                    case int intValue:
+                        this.Set(nestedKey, intValue.ToString(CultureInfo.InvariantCulture));
+                        break;
+                    case long longValue:
+                        this.Set(nestedKey, longValue.ToString(CultureInfo.InvariantCulture));
+                        break;
+                    case bool boolValue:
+                        this.Set(nestedKey, boolValue.ToString(CultureInfo.InvariantCulture));
+                        break;
                     case JToken token:
                         switch (token.Type)
                         {
                             case JTokenType.Object:
                                 this.SetData<JToken?>(token.Value<JObject>(), nestedKey);
                                 break;
-                            case JTokenType.String:
-                                this.Set(nestedKey, token.Value<string>());
-                                break;
                             case JTokenType.None:
                             case JTokenType.Array:
-                            case JTokenType.Constructor:
+                                var array = (JArray)token;
+                                for (var i = 0; i < array.Count; i++)
+                                {
+                                    if (array[i].Type == JTokenType.Array)
+                                    {
+                                        this.SetData<JToken?>(array[i].Value<JObject>(), $"{nestedKey}:{i}");
+                                    }
+                                    else if (array[i].Type == JTokenType.Object)
+                                    {
+                                        this.SetData<JToken?>(array[i].Value<JObject>(), $"{nestedKey}:{i}");
+                                    }
+                                    else
+                                    {
+                                        this.Set($"{nestedKey}:{i}", array[i].Value<string>());
+                                    }
+                                }
+
+                                break;
+
                             case JTokenType.Property:
-                            case JTokenType.Comment:
                             case JTokenType.Integer:
                             case JTokenType.Float:
                             case JTokenType.Boolean:
-                            case JTokenType.Null:
                             case JTokenType.Undefined:
                             case JTokenType.Date:
                             case JTokenType.Raw:
@@ -147,6 +170,8 @@ namespace VaultSharp.Extensions.Configuration
                             case JTokenType.Guid:
                             case JTokenType.Uri:
                             case JTokenType.TimeSpan:
+                            case JTokenType.String:
+                                this.Set(nestedKey, token.Value<string>());
                                 break;
                         }
 
