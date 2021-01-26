@@ -14,13 +14,15 @@ namespace VaultSharp.Extensions.Configuration
         /// <param name="vaultRoleId">Vault Role ID.</param>
         /// <param name="reloadOnChange">Reload secrets if changed in Vault.</param>
         /// <param name="reloadCheckIntervalSeconds">Interval in seconds to check Vault for any changes.</param>
+        /// <param name="omitVaultKeyName">Omit Vault Key Name in Configuration Keys.</param>
         public VaultOptions(
             string vaultAddress,
             string? vaultToken,
             string? vaultSecret = null,
             string? vaultRoleId = null,
             bool reloadOnChange = false,
-            int reloadCheckIntervalSeconds = 300)
+            int reloadCheckIntervalSeconds = 300,
+            bool omitVaultKeyName = false)
         {
             this.VaultAddress = vaultAddress;
             this.VaultToken = vaultToken;
@@ -28,6 +30,7 @@ namespace VaultSharp.Extensions.Configuration
             this.VaultRoleId = vaultRoleId;
             this.ReloadOnChange = reloadOnChange;
             this.ReloadCheckIntervalSeconds = reloadCheckIntervalSeconds;
+            this.OmitVaultKeyName = omitVaultKeyName;
         }
 
         /// <summary>
@@ -60,5 +63,10 @@ namespace VaultSharp.Extensions.Configuration
         /// Gets interval in seconds to check Vault for any changes.
         /// </summary>
         public int ReloadCheckIntervalSeconds { get; }
+
+        /// <summary>
+        /// Gets a value indicating whether the Vault key should be ommited when generation Configuration key names.
+        /// </summary>
+        public bool OmitVaultKeyName { get;  }
     }
 }
