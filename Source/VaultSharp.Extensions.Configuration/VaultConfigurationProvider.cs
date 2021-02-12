@@ -3,6 +3,7 @@ namespace VaultSharp.Extensions.Configuration
     using System;
     using System.Collections.Generic;
     using System.Globalization;
+    using System.Net.Http;
     using System.Threading.Tasks;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.Logging;
@@ -65,10 +66,27 @@ namespace VaultSharp.Extensions.Configuration
                         authMethod = new TokenAuthMethodInfo(this._source.Options.VaultToken);
                     }
 
-                    var vaultClientSettings = new VaultClientSettings(this._source.Options.VaultAddress, authMethod)
+                    VaultClientSettings vaultClientSettings;
+                    if (this._source.Options.IgnoreSSLVerification)
                     {
-                        UseVaultTokenHeaderInsteadOfAuthorizationHeader = true,
-                    };
+                        vaultClientSettings = new VaultClientSettings(this._source.Options.VaultAddress, authMethod)
+                        {
+                            UseVaultTokenHeaderInsteadOfAuthorizationHeader = true,
+                            MyHttpClientProviderFunc = (handler) =>
+                            {
+                                handler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true;
+                                return new HttpClient(handler);
+                            },
+                        };
+                    }
+                    else
+                    {
+                        vaultClientSettings = new VaultClientSettings(this._source.Options.VaultAddress, authMethod)
+                        {
+                            UseVaultTokenHeaderInsteadOfAuthorizationHeader = true,
+                        };
+                    }
+
                     this._vaultClient = new VaultClient(vaultClientSettings);
                 }
 

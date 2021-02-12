@@ -14,13 +14,15 @@ namespace VaultSharp.Extensions.Configuration
         /// <param name="vaultRoleId">Vault Role ID.</param>
         /// <param name="reloadOnChange">Reload secrets if changed in Vault.</param>
         /// <param name="reloadCheckIntervalSeconds">Interval in seconds to check Vault for any changes.</param>
+        /// <param name="ignoreSslVerification">Whether SSL validation is turned off. False by default.</param>
         public VaultOptions(
             string vaultAddress,
             string? vaultToken,
             string? vaultSecret = null,
             string? vaultRoleId = null,
             bool reloadOnChange = false,
-            int reloadCheckIntervalSeconds = 300)
+            int reloadCheckIntervalSeconds = 300,
+            bool ignoreSslVerification = false)
         {
             this.VaultAddress = vaultAddress;
             this.VaultToken = vaultToken;
@@ -28,6 +30,7 @@ namespace VaultSharp.Extensions.Configuration
             this.VaultRoleId = vaultRoleId;
             this.ReloadOnChange = reloadOnChange;
             this.ReloadCheckIntervalSeconds = reloadCheckIntervalSeconds;
+            this.IgnoreSSLVerification = ignoreSslVerification;
         }
 
         /// <summary>
@@ -60,5 +63,10 @@ namespace VaultSharp.Extensions.Configuration
         /// Gets interval in seconds to check Vault for any changes.
         /// </summary>
         public int ReloadCheckIntervalSeconds { get; }
+
+        /// <summary>
+        /// Gets a value indicating whether SSL validation is turned off.
+        /// </summary>
+        public bool IgnoreSSLVerification { get; }
     }
 }
