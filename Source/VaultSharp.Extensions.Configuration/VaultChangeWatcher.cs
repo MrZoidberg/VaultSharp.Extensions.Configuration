@@ -17,7 +17,7 @@ namespace VaultSharp.Extensions.Configuration
     public class VaultChangeWatcher : BackgroundService
     {
         private readonly ILogger? _logger;
-        private VaultConfigurationProvider? _configProvider;
+        private IEnumerable<VaultConfigurationProvider> _configProviders;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="VaultChangeWatcher"/> class.
@@ -34,35 +34,47 @@ namespace VaultSharp.Extensions.Configuration
 
             this._logger = logger;
 
-            this._configProvider = (VaultConfigurationProvider?)configurationRoot.Providers.FirstOrDefault(p =>
-                    p is VaultConfigurationProvider);
+            this._configProviders = configurationRoot.Providers.OfType<VaultConfigurationProvider>().Where(p => p.ConfigurationSource.Options.ReloadOnChange).ToList() !;
         }
 
         /// <inheritdoc />
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            if (this._configProvider == null || !this._configProvider.ConfigurationSource.Options.ReloadOnChange)
+            Dictionary<int, int> timers = new Dictionary<int, int>(); // key - index of config provider, value - timer
+            var minTime = int.MaxValue;
+            var i = 0;
+            foreach (VaultConfigurationProvider provider in this._configProviders)
             {
-                this._logger?.LogInformation(
-                    "VaultChangeWatcher won't work because configuration provider is null or ReloadOnChange is disabled");
-                return;
+                var waitForSec = provider.ConfigurationSource.Options.ReloadCheckIntervalSeconds;
+                minTime = Math.Min(minTime, waitForSec);
+                timers[i] = waitForSec;
+                i++;
             }
 
-            int waitForSec = this._configProvider.ConfigurationSource.Options.ReloadCheckIntervalSeconds;
+            this._logger?.LogInformation($"VaultChangeWatcher will use {minTime} seconds interval");
 
             while (!stoppingToken.IsCancellationRequested)
             {
-                this._logger?.LogInformation(
-                    $"VaultChangeWatcher will wait for {waitForSec} seconds");
-                await Task.Delay(TimeSpan.FromSeconds(waitForSec), stoppingToken).ConfigureAwait(false);
+                await Task.Delay(TimeSpan.FromSeconds(minTime), stoppingToken).ConfigureAwait(false);
                 if (stoppingToken.IsCancellationRequested)
                 {
                     break;
                 }
 
-                this._logger?.LogInformation(
-                    "Vault configuration reload is triggered by VaultChangeWatcher");
-                this._configProvider.Load();
+                for (var j = 0; j < this._configProviders.Count(); j++)
+                {
+                    var timer = timers[j];
+                    timer -= minTime;
+                    if (timer <= 0)
+                    {
+                        this._configProviders.ElementAt(j).Load();
+                        timers[j] = this._configProviders.ElementAt(j).ConfigurationSource.Options.ReloadCheckIntervalSeconds;
+                    }
+                    else
+                    {
+                        timers[j] = timer;
+                    }
+                }
             }
         }
     }
