@@ -104,6 +104,12 @@ namespace VaultSharp.Extensions.Configuration.Test
                             new KeyValuePair<string, object>("option2", "value2"),
                         }
                     },
+                    {
+                        "test/otherSubsection.otherSubsection2/otherSubsection3.otherSubsection4.otherSubsection5", new[]
+                        {
+                            new KeyValuePair<string, object>("option7", "value7"),
+                        }
+                    },
                 };
 
             var container = this.PrepareVaultContainer();
@@ -115,7 +121,7 @@ namespace VaultSharp.Extensions.Configuration.Test
                 // act
                 ConfigurationBuilder builder = new ConfigurationBuilder();
                 builder.AddVaultConfiguration(
-                    () => new VaultOptions("http://localhost:8200", "root"),
+                    () => new VaultOptions("http://localhost:8200", "root", additionalCharactersForConfigurationPath: new []{'.'}),
                     "test",
                     "secret",
                     this._logger);
@@ -137,6 +143,12 @@ namespace VaultSharp.Extensions.Configuration.Test
                 t2.OptionA.Should().Be("a2");
                 t2.OptionB.Should().Be("b2");
                 configurationRoot.GetSection("subsection").GetValue<string>("option2").Should().Be("value2");
+                configurationRoot.GetSection("otherSubsection")
+                    .GetSection("otherSubsection2")
+                    .GetSection("otherSubsection3")
+                    .GetSection("otherSubsection4")
+                    .GetSection("otherSubsection5")
+                    .GetValue<string>("option7").Should().Be("value7");
             }
             finally
             {
