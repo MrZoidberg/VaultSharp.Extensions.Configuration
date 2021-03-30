@@ -3,6 +3,8 @@ namespace VaultSharp.Extensions.Configuration
     using System;
     using System.Collections.Generic;
     using System.Globalization;
+    using System.Linq;
+    using System.Text;
     using System.Threading.Tasks;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.Logging;
@@ -94,6 +96,7 @@ namespace VaultSharp.Extensions.Configuration
                 var key = secretData.Key;
                 key = key.Replace(this._source.BasePath, string.Empty, StringComparison.InvariantCultureIgnoreCase).TrimStart('/')
                     .Replace('/', ':');
+                key = this.ReplaceTheAdditionalCharactersForConfigurationPath(key);
                 var data = secretData.SecretData.Data;
 
                 var shouldSetValue = true;
@@ -118,6 +121,8 @@ namespace VaultSharp.Extensions.Configuration
             foreach (var pair in data)
             {
                 var nestedKey = string.IsNullOrEmpty(key) ? pair.Key : $"{key}:{pair.Key}";
+                nestedKey = this.ReplaceTheAdditionalCharactersForConfigurationPath(nestedKey);
+
                 var nestedValue = pair.Value;
                 switch (nestedValue)
                 {
@@ -233,6 +238,23 @@ namespace VaultSharp.Extensions.Configuration
             {
                 yield return keyedSecretData;
             }
+        }
+
+        private string ReplaceTheAdditionalCharactersForConfigurationPath(string inputKey)
+        {
+            if (!this._source.Options.AdditionalCharactersForConfigurationPath.Any())
+            {
+                return inputKey;
+            }
+
+            var outputKey = new StringBuilder(inputKey);
+
+            foreach (var c in this._source.Options.AdditionalCharactersForConfigurationPath)
+            {
+                outputKey.Replace(c, ':');
+            }
+
+            return outputKey.ToString();
         }
 
         private class KeyedSecretData
