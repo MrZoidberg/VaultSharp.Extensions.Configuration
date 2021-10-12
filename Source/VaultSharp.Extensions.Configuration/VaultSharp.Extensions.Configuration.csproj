@@ -17,19 +17,17 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Configuration" Version="3.1.9" />
-    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="3.1.8" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="3.1.9" />
-    <PackageReference Include="Microsoft.VisualStudio.Threading" Version="16.6.13" >
+    <PackageReference Include="GitVersion.MsBuild" Version="5.7.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="3.1.19" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="3.1.19" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="3.1.19" />
+    <PackageReference Include="Microsoft.VisualStudio.Threading" Version="16.10.56">
       <PrivateAssets>All</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="VaultSharp" Version="1.4.0.4" />
-  </ItemGroup>
-
-  <ItemGroup Label="Project References">
-    <PackageReference Include="GitVersionTask" Version="5.3.6">
-      <PrivateAssets>All</PrivateAssets>
-    </PackageReference>
+    <PackageReference Include="VaultSharp" Version="1.7.0" />
   </ItemGroup>
 
 </Project>

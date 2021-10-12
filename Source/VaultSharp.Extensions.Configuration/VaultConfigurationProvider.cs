@@ -142,20 +142,36 @@ namespace VaultSharp.Extensions.Configuration
                         switch (token.Type)
                         {
                             case JTokenType.Object:
-                                this.SetData<JToken?>(token.Value<JObject>(), nestedKey);
+                            {
+                                var jObject = token.Value<JObject>();
+                                if (jObject != null)
+                                {
+                                    this.SetData<JToken?>(jObject, nestedKey);
+                                }
+
                                 break;
+                            }
+
                             case JTokenType.None:
                             case JTokenType.Array:
+                            {
                                 var array = (JArray)token;
                                 for (var i = 0; i < array.Count; i++)
                                 {
+                                    var jObject = token.Value<JObject>();
+
+                                    if (jObject == null)
+                                    {
+                                        break;
+                                    }
+
                                     if (array[i].Type == JTokenType.Array)
                                     {
-                                        this.SetData<JToken?>(array[i].Value<JObject>(), $"{nestedKey}:{i}");
+                                        this.SetData<JToken?>(jObject, $"{nestedKey}:{i}");
                                     }
                                     else if (array[i].Type == JTokenType.Object)
                                     {
-                                        this.SetData<JToken?>(array[i].Value<JObject>(), $"{nestedKey}:{i}");
+                                        this.SetData<JToken?>(jObject, $"{nestedKey}:{i}");
                                     }
                                     else
                                     {
@@ -164,6 +180,7 @@ namespace VaultSharp.Extensions.Configuration
                                 }
 
                                 break;
+                            }
 
                             case JTokenType.Property:
                             case JTokenType.Integer:
