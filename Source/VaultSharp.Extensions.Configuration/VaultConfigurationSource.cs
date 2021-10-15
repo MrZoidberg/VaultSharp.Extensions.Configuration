@@ -33,7 +33,7 @@ namespace VaultSharp.Extensions.Configuration
             this._logger = logger;
             this.Options = options;
             this.BasePath = basePath;
-            this.MountPoint = mountPoint ?? SecretsEngineDefaultPaths.KeyValueV2;
+            this.MountPoint = mountPoint ?? SecretsEngineMountPoints.Defaults.KeyValueV2;
         }
 
         /// <summary>

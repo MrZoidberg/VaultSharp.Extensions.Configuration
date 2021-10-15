@@ -53,7 +53,6 @@ Task("Test")
                 NoRestore = true,
                 ResultsDirectory = artefactsDirectory,
                 ArgumentCustomization = x => x
-                    .Append("--blame")
                     .AppendSwitch("--logger", $"html;LogFileName={project.GetFilenameWithoutExtension()}.html")
                     .Append("--collect:\"XPlat Code Coverage\"")
                     .Append("--settings runsettings.xml"),
