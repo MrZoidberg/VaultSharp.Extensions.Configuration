@@ -116,7 +116,7 @@ namespace VaultSharp.Extensions.Configuration
             }
         }
 
-        private void SetData<TValue>(IEnumerable<KeyValuePair<string, TValue>> data, string key)
+        private void SetData<TValue>(IEnumerable<KeyValuePair<string, TValue>> data, string? key)
         {
             foreach (var pair in data)
             {
@@ -158,20 +158,17 @@ namespace VaultSharp.Extensions.Configuration
                                 var array = (JArray)token;
                                 for (var i = 0; i < array.Count; i++)
                                 {
-                                    var jObject = token.Value<JObject>();
-
-                                    if (jObject == null)
-                                    {
-                                        break;
-                                    }
+                                    var arrElement = array[i];
 
                                     if (array[i].Type == JTokenType.Array)
                                     {
-                                        this.SetData<JToken?>(jObject, $"{nestedKey}:{i}");
+                                        this.SetData(new[] { new KeyValuePair<string, JToken?>($"{nestedKey}:{i}", arrElement) }, null);
                                     }
                                     else if (array[i].Type == JTokenType.Object)
                                     {
-                                        this.SetData<JToken?>(jObject, $"{nestedKey}:{i}");
+                                        this.SetData(new[] { new KeyValuePair<string, JToken?>($"{nestedKey}:{i}", arrElement) }, null);
+
+                                        // this.SetData<JToken?>(arrElement, $"{nestedKey}:{i}");
                                     }
                                     else
                                     {

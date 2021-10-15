@@ -9,10 +9,8 @@ namespace VaultSharp.Extensions.Configuration.Test
     using DotNet.Testcontainers.Containers.WaitStrategies;
     using FluentAssertions;
     using Microsoft.Extensions.Configuration;
-    using Microsoft.VisualStudio.TestPlatform.TestHost;
     using Newtonsoft.Json;
     using Serilog;
-    using Serilog.Core;
     using Serilog.Extensions.Logging;
     using VaultSharp.V1.AuthMethods.Token;
     using Xunit;
@@ -49,7 +47,7 @@ namespace VaultSharp.Extensions.Configuration.Test
         {
             var authMethod = new TokenAuthMethodInfo("root");
 
-            var vaultClientSettings = new VaultClientSettings("http://localhost:8200", authMethod);
+            var vaultClientSettings = new VaultClientSettings("http://localhost:8200", authMethod) { SecretsEngineMountPoints = { KeyValueV2 = "secret" } };
             IVaultClient vaultClient = new VaultClient(vaultClientSettings);
 
             foreach (var sectionPair in values)
@@ -69,7 +67,7 @@ namespace VaultSharp.Extensions.Configuration.Test
         {
             var authMethod = new TokenAuthMethodInfo("root");
 
-            var vaultClientSettings = new VaultClientSettings("http://localhost:8200", authMethod);
+            var vaultClientSettings = new VaultClientSettings("http://localhost:8200", authMethod) { SecretsEngineMountPoints = { KeyValueV2 = "secret" } };
             IVaultClient vaultClient = new VaultClient(vaultClientSettings);
 
             var dictionary = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonData);
@@ -89,8 +87,9 @@ namespace VaultSharp.Extensions.Configuration.Test
                             new KeyValuePair<string, object>("option1", "value1"),
                             new KeyValuePair<string, object>("option3", 5),
                             new KeyValuePair<string, object>("option4", true),
-                            new KeyValuePair<string, object>("option5", new[] {"v1", "v2", "v3"}),
-                            new KeyValuePair<string, object>("option6",
+                            new KeyValuePair<string, object>("option5", new[] { "v1", "v2", "v3" }),
+                            new KeyValuePair<string, object>(
+                                "option6",
                                 new[]
                                 {
                                     new TestConfigObject() {OptionA = "a1", OptionB = "b1"},
@@ -194,8 +193,8 @@ namespace VaultSharp.Extensions.Configuration.Test
             var values =
                 new Dictionary<string, IEnumerable<KeyValuePair<string, object>>>
                 {
-                    {"test", new[] {new KeyValuePair<string, object>("option1", "value1"),}},
-                    {"test/subsection", new[] {new KeyValuePair<string, object>("option2", "value2"),}},
+                    { "test", new[] { new KeyValuePair<string, object>("option1", "value1") } },
+                    { "test/subsection", new[] { new KeyValuePair<string, object>("option2", "value2") } },
                 };
 
             var container = this.PrepareVaultContainer();
@@ -208,8 +207,7 @@ namespace VaultSharp.Extensions.Configuration.Test
                 // act
                 ConfigurationBuilder builder = new ConfigurationBuilder();
                 builder.AddVaultConfiguration(
-                    () => new VaultOptions("http://localhost:8200", "root", reloadOnChange: true,
-                        reloadCheckIntervalSeconds: 10),
+                    () => new VaultOptions("http://localhost:8200", "root", reloadOnChange: true, reloadCheckIntervalSeconds: 10),
                     "test",
                     "secret",
                     this._logger);
@@ -226,12 +224,12 @@ namespace VaultSharp.Extensions.Configuration.Test
                 // load new data and wait for reload
                 values = new Dictionary<string, IEnumerable<KeyValuePair<string, object>>>
                 {
-                    {"test", new[] {new KeyValuePair<string, object>("option1", "value1_new"),}},
-                    {"test/subsection", new[] {new KeyValuePair<string, object>("option2", "value2_new"),}},
-                    {"test/subsection3", new[] {new KeyValuePair<string, object>("option3", "value3_new"),}},
+                    { "test", new[] { new KeyValuePair<string, object>("option1", "value1_new") } },
+                    { "test/subsection", new[] { new KeyValuePair<string, object>("option2", "value2_new") } },
+                    { "test/subsection3", new[] { new KeyValuePair<string, object>("option3", "value3_new") } },
                 };
                 await this.LoadDataAsync(values).ConfigureAwait(false);
-                await Task.Delay(TimeSpan.FromSeconds(15)).ConfigureAwait(true);
+                await Task.Delay(TimeSpan.FromSeconds(15), cts.Token).ConfigureAwait(true);
 
                 reloadToken.HasChanged.Should().BeTrue();
                 configurationRoot.GetValue<string>("option1").Should().Be("value1_new");
@@ -257,7 +255,7 @@ namespace VaultSharp.Extensions.Configuration.Test
             var container = this.PrepareVaultContainer();
             try
             {
-                await container.StartAsync().ConfigureAwait(false);
+                await container.StartAsync(cts.Token).ConfigureAwait(false);
                 await this.LoadDataAsync("myservice-config", jsonData).ConfigureAwait(false);
 
 
@@ -283,7 +281,7 @@ namespace VaultSharp.Extensions.Configuration.Test
                     @"{""option1"": ""value1_new"",""subsection"": {""option2"": ""value2_new""},""subsection3"": {""option3"": ""value3_new""}}";
 
                 await this.LoadDataAsync("myservice-config", jsonData).ConfigureAwait(false);
-                await Task.Delay(TimeSpan.FromSeconds(15)).ConfigureAwait(true);
+                await Task.Delay(TimeSpan.FromSeconds(15), cts.Token).ConfigureAwait(true);
 
                 reloadToken.HasChanged.Should().BeTrue();
                 configurationRoot.GetValue<string>("option1").Should().Be("value1_new");
@@ -298,7 +296,6 @@ namespace VaultSharp.Extensions.Configuration.Test
                 await container.DisposeAsync().ConfigureAwait(false);
             }
         }
-
     }
 
     public class TestConfigObject
