@@ -2,6 +2,7 @@ namespace VaultSharp.Extensions.Configuration
 {
     using System;
     using System.Collections.Generic;
+    using System.ComponentModel.Design;
     using System.Globalization;
     using System.Linq;
     using System.Text;
@@ -89,7 +90,11 @@ namespace VaultSharp.Extensions.Configuration
 
         private async Task LoadVaultDataAsync(IVaultClient vaultClient)
         {
-            await foreach (var secretData in this.ReadKeysAsync(vaultClient, this._source.BasePath))
+            var enumerable = !this._source.UseV1Engine
+                ? this.ReadKeysAsync(vaultClient, this._source.BasePath)
+                : this.ReadKeysV1Async(vaultClient, this._source.BasePath);
+
+            await foreach (var secretData in enumerable)
             {
                 this._logger?.LogDebug($"VaultConfigurationProvider: got Vault data with key `{secretData.Key}`");
 
@@ -111,7 +116,7 @@ namespace VaultSharp.Extensions.Configuration
                 {
                     this.SetData(data, this.ConfigurationSource.Options.OmitVaultKeyName ? string.Empty : key);
 
-                    this._versionsCache[key] = secretData.SecretData.Metadata.Version;
+                    this._versionsCache[key] = !this._source.UseV1Engine ? secretData.SecretData.Metadata.Version : 1;
                 }
             }
         }
@@ -211,7 +216,8 @@ namespace VaultSharp.Extensions.Configuration
 
             try
             {
-                keys = await vaultClient.V1.Secrets.KeyValue.V2.ReadSecretPathsAsync(folderPath, this._source.MountPoint).ConfigureAwait(false);
+                keys = await vaultClient.V1.Secrets.KeyValue.V2.ReadSecretPathsAsync(folderPath, this._source.MountPoint)
+                    .ConfigureAwait(false);
             }
             catch (VaultApiException)
             {
@@ -241,7 +247,65 @@ namespace VaultSharp.Extensions.Configuration
             {
                 var secretData = await vaultClient.V1.Secrets.KeyValue.V2.ReadSecretAsync(valuePath, null, this._source.MountPoint)
                     .ConfigureAwait(false);
+
                 keyedSecretData = new KeyedSecretData(valuePath, secretData.Data);
+            }
+            catch (VaultApiException)
+            {
+                // this is folder, not a key
+            }
+
+            if (keyedSecretData != null)
+            {
+                yield return keyedSecretData;
+            }
+        }
+
+        private async IAsyncEnumerable<KeyedSecretData> ReadKeysV1Async(IVaultClient vaultClient, string path)
+        {
+            Secret<ListInfo>? keys = null;
+            var folderPath = path;
+            if (folderPath.EndsWith("/", StringComparison.InvariantCulture) == false)
+            {
+                folderPath += "/";
+            }
+
+            try
+            {
+                keys = await vaultClient.V1.Secrets.KeyValue.V1.ReadSecretPathsAsync(folderPath, this._source.MountPoint)
+                    .ConfigureAwait(false);
+            }
+            catch (VaultApiException)
+            {
+                // this is key, not a folder
+            }
+
+            if (keys != null)
+            {
+                foreach (var key in keys.Data.Keys)
+                {
+                    var keyData = this.ReadKeysAsync(vaultClient, folderPath + key);
+                    await foreach (var secretData in keyData)
+                    {
+                        yield return secretData;
+                    }
+                }
+            }
+
+            var valuePath = path;
+            if (valuePath.EndsWith("/", StringComparison.InvariantCulture) == true)
+            {
+                valuePath = valuePath.TrimEnd('/');
+            }
+
+            KeyedSecretData? keyedSecretData = null;
+            try
+            {
+                var data = await vaultClient.V1.Secrets.KeyValue.V1
+                    .ReadSecretAsync(valuePath, this._source.MountPoint)
+                    .ConfigureAwait(false);
+
+                keyedSecretData = new KeyedSecretData(valuePath, data);
             }
             catch (VaultApiException)
             {
@@ -277,6 +341,12 @@ namespace VaultSharp.Extensions.Configuration
             {
                 this.Key = key;
                 this.SecretData = secretData;
+            }
+
+            public KeyedSecretData(string key, Secret<Dictionary<string, object>> data)
+            {
+                this.Key = key;
+                this.SecretData = new SecretData { Data = data.Data };
             }
 
             public string Key { get; }

@@ -28,12 +28,19 @@ namespace VaultSharp.Extensions.Configuration
         /// <param name="basePath">Base path.</param>
         /// <param name="mountPoint">Mounting point.</param>
         /// <param name="logger">Logger instance.</param>
-        public VaultConfigurationSource(VaultOptions options, string basePath, string? mountPoint = null, ILogger? logger = null)
+        /// <param name="useV1Engine">Use v1 secrets engine.</param>
+        public VaultConfigurationSource(VaultOptions options, string basePath, string? mountPoint = null, ILogger? logger = null, bool? useV1Engine = null)
         {
             this._logger = logger;
             this.Options = options;
             this.BasePath = basePath;
-            this.MountPoint = mountPoint ?? SecretsEngineMountPoints.Defaults.KeyValueV2;
+
+            if (useV1Engine == true)
+            {
+                this.UseV1Engine = true;
+            }
+
+            this.MountPoint = mountPoint ?? (!this.UseV1Engine ? SecretsEngineMountPoints.Defaults.KeyValueV2 : SecretsEngineMountPoints.Defaults.KeyValueV1);
         }
 
         /// <summary>
@@ -50,6 +57,11 @@ namespace VaultSharp.Extensions.Configuration
         /// Gets mounting point.
         /// </summary>
         public string MountPoint { get; }
+
+        /// <summary>
+        /// Gets a value indicating whether gets base path for vault URLs.
+        /// </summary>
+        public bool UseV1Engine { get; }
 
         /// <summary>
         /// Build configuration provider.
