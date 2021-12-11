@@ -19,6 +19,7 @@ namespace VaultSharp.Extensions.Configuration
         /// <param name="reloadCheckIntervalSeconds">Interval in seconds to check Vault for any changes.</param>
         /// <param name="omitVaultKeyName">Omit Vault Key Name in Configuration Keys.</param>
         /// <param name="additionalCharactersForConfigurationPath">Additional characters for the Configuration path.</param>
+        /// <param name="namespace">Vault namespace.</param>
         public VaultOptions(
             string vaultAddress,
             string? vaultToken,
@@ -27,7 +28,8 @@ namespace VaultSharp.Extensions.Configuration
             bool reloadOnChange = false,
             int reloadCheckIntervalSeconds = 300,
             bool omitVaultKeyName = false,
-            IEnumerable<char>? additionalCharactersForConfigurationPath = null)
+            IEnumerable<char>? additionalCharactersForConfigurationPath = null,
+            string? @namespace = null)
         {
             this.VaultAddress = vaultAddress;
             this.VaultToken = vaultToken;
@@ -37,6 +39,7 @@ namespace VaultSharp.Extensions.Configuration
             this.ReloadCheckIntervalSeconds = reloadCheckIntervalSeconds;
             this.OmitVaultKeyName = omitVaultKeyName;
             this.AdditionalCharactersForConfigurationPath = additionalCharactersForConfigurationPath ?? Array.Empty<char>();
+            this.Namespace = @namespace;
         }
 
         /// <summary>
@@ -79,5 +82,10 @@ namespace VaultSharp.Extensions.Configuration
         /// Gets an array of characters that will be used as a path to form the Configuration.
         /// </summary>
         public IEnumerable<char> AdditionalCharactersForConfigurationPath { get; }
+
+        /// <summary>
+        /// Gets Vault namespace.
+        /// </summary>
+        public string? Namespace { get; }
     }
 }

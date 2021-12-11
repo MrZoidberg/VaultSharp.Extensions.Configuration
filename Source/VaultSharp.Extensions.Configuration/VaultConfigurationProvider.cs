@@ -70,6 +70,7 @@ namespace VaultSharp.Extensions.Configuration
                     var vaultClientSettings = new VaultClientSettings(this._source.Options.VaultAddress, authMethod)
                     {
                         UseVaultTokenHeaderInsteadOfAuthorizationHeader = true,
+                        Namespace = this._source.Options.Namespace,
                     };
                     this._vaultClient = new VaultClient(vaultClientSettings);
                 }
