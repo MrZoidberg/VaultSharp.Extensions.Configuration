@@ -111,7 +111,7 @@ Alternatively, you can configure Vault connection using next environmnt variable
 ## Preparing secrets in Vault
 
 You need to store your secrets with special naming rules.
-First of all, all secrets should use KV2 storage and have prefix `{app_alias}` or `{app_alias}/{env}`.
+Secrets can use KV1 or KV2 storage and have prefix `{app_alias}` or `{app_alias}/{env}`.
 
 For example, if your app has alias `sampleapp` and environment `producton` and you want to have configuration option `ConnectionString` your secret path would be or `sampleapp` or `sampleapp/producton`.
 
