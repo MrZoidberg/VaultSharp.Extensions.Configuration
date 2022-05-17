@@ -109,6 +109,12 @@ namespace VaultSharp.Extensions.Configuration.Test
                             new KeyValuePair<string, object>("option7", "value7"),
                         }
                     },
+                    {
+                        "test/subsection/testsection", new[]
+                        {
+                            new KeyValuePair<string, object>("option8", "value8"),
+                        }
+                    },
                 };
 
             var container = this.PrepareVaultContainer();
@@ -148,6 +154,7 @@ namespace VaultSharp.Extensions.Configuration.Test
                     .GetSection("otherSubsection4")
                     .GetSection("otherSubsection5")
                     .GetValue<string>("option7").Should().Be("value7");
+                configurationRoot.GetSection("subsection").GetSection("testsection").GetValue<string>("option8").Should().Be("value8");
             }
             finally
             {
@@ -227,6 +234,7 @@ namespace VaultSharp.Extensions.Configuration.Test
                     { "test", new[] { new KeyValuePair<string, object>("option1", "value1_new") } },
                     { "test/subsection", new[] { new KeyValuePair<string, object>("option2", "value2_new") } },
                     { "test/subsection3", new[] { new KeyValuePair<string, object>("option3", "value3_new") } },
+                    { "test/testsection", new[] { new KeyValuePair<string, object>("option4", "value4_new") } },
                 };
                 await this.LoadDataAsync(values).ConfigureAwait(false);
                 await Task.Delay(TimeSpan.FromSeconds(15), cts.Token).ConfigureAwait(true);
@@ -235,6 +243,7 @@ namespace VaultSharp.Extensions.Configuration.Test
                 configurationRoot.GetValue<string>("option1").Should().Be("value1_new");
                 configurationRoot.GetSection("subsection").GetValue<string>("option2").Should().Be("value2_new");
                 configurationRoot.GetSection("subsection3").GetValue<string>("option3").Should().Be("value3_new");
+                configurationRoot.GetSection("testsection").GetValue<string>("option4").Should().Be("value4_new");
 
                 changeWatcher.Dispose();
             }
