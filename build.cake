@@ -51,7 +51,7 @@ Task("Test")
                 //Logger = $"trx;LogFileName={project.GetFilenameWithoutExtension()}.trx",
                 NoBuild = true,
                 NoRestore = true,
-                ResultsDirectory = artefactsDirectory,
+                //ResultsDirectory = artefactsDirectory,
                 ArgumentCustomization = x => x
                     .AppendSwitch("--logger", $"html;LogFileName={project.GetFilenameWithoutExtension()}.html")
                     .Append("--collect:\"XPlat Code Coverage\"")
