@@ -39,16 +39,31 @@ jobs:
     - name: 'Dotnet Cake Test'
       run: dotnet cake --target=Test
       shell: pwsh
+    - name: Copy Coverage To Predictable Location
+      if: github.event_name == 'pull_request'
+      run: cp coverage/*/coverage.cobertura.xml coverage/coverage.cobertura.xml
+    - name: Code Coverage Summary Report
+      if: github.event_name == 'pull_request'
+      uses: irongut/CodeCoverageSummary@v1.0.2
+      with:
+        filename: coverage/coverage.cobertura.xml
+        badge: true
+        format: "markdown"
+        output: "both"
+    - run: npm install fs
+      if: github.event_name == 'pull_request'
+    - uses: actions/github-script@v5
+      if: github.event_name == 'pull_request'
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const fs = require('fs')
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: '🙋‍♂️ 👷‍♀️👷‍♂️🏗️ \n\n' + fs.readFileSync('./code-coverage-results.md', 'utf8')
+          })
     - name: 'Dotnet Cake Pack'
       run: dotnet cake --target=Pack
       shell: pwsh
-    - name: 'Publish Code Coverage'
-      uses: actions/upload-artifact@v2
-      with:
-        name: tests
-        path: './Artefacts/**/coverage.opencover.xml'
-    - name: 'Publish Test Results'
-      uses: actions/upload-artifact@v2
-      with:
-        name: tests
-        path: './Artefacts/VaultSharp.Extensions.Configuration.Test.html'

@@ -4,7 +4,12 @@
     <DataCollectors>
       <DataCollector friendlyName="XPlat code coverage">
         <Configuration>
+          <ExcludeByFile>**/obj/**/*.*</ExcludeByFile>
+          <ExcludeByAttribute>GeneratedCodeAttribute,CompilerGeneratedAttribute</ExcludeByAttribute>
           <Format>opencover</Format>
+          <UseSourceLink>true</UseSourceLink>
+          <IncludeTestAssembly>true</IncludeTestAssembly>
+          <DeterministicReport>false</DeterministicReport>
         </Configuration>
       </DataCollector>
     </DataCollectors>

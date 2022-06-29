@@ -15,4 +15,8 @@
     <RepositoryType>git</RepositoryType>
     <PackageReleaseNotes>https://github.com/MrZoidberg/VaultSharp.Extensions.Configuration/releases</PackageReleaseNotes>
   </PropertyGroup>
+
+  <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+  </PropertyGroup>
 </Project>
