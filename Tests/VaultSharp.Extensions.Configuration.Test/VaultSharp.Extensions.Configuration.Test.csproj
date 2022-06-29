@@ -2,8 +2,8 @@
 
   <PropertyGroup Label="Build">
     <Nullable>enable</Nullable>
-    <TargetFrameworks>net6.0;netcoreapp3.1</TargetFrameworks>
     <GenerateErrorForMissingTargetingPacks>false</GenerateErrorForMissingTargetingPacks>
+    <TargetFramework>net6.0</TargetFramework>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
