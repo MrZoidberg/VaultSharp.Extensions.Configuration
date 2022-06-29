@@ -41,6 +41,9 @@ jobs:
       shell: pwsh
     - name: Copy Coverage To Predictable Location
       if: github.event_name == 'pull_request'
+      run: cd coverage & ls -lia
+    - name: Copy Coverage To Predictable Location
+      if: github.event_name == 'pull_request'
       run: cp coverage/*/coverage.opencover.xml coverage/coverage.opencover.xml
     - name: Code Coverage Summary Report
       if: github.event_name == 'pull_request'
@@ -50,20 +53,12 @@ jobs:
         badge: true
         format: "markdown"
         output: "both"
-    - run: npm install fs
-      if: github.event_name == 'pull_request'
-    - uses: actions/github-script@v5
+    - name: Add Coverage PR Comment
+      uses: marocchino/sticky-pull-request-comment@v2
       if: github.event_name == 'pull_request'
       with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        script: |
-          const fs = require('fs')
-          github.rest.issues.createComment({
-            issue_number: context.issue.number,
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            body: '🙋‍♂️ 👷‍♀️👷‍♂️🏗️ \n\n' + fs.readFileSync('./code-coverage-results.md', 'utf8')
-          })
+        recreate: true
+        path: code-coverage-results.md
     - name: 'Dotnet Cake Pack'
       run: dotnet cake --target=Pack
       shell: pwsh
