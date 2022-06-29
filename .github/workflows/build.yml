@@ -44,7 +44,7 @@ jobs:
       run: cp coverage/*/coverage.opencover.xml coverage/coverage.opencover.xml
     - name: Code Coverage Summary Report
       if: github.event_name == 'pull_request'
-      uses: irongut/CodeCoverageSummary@v1.0.2
+      uses: irongut/CodeCoverageSummary@v1.2.0
       with:
         filename: coverage/coverage.opencover.xml
         badge: true
