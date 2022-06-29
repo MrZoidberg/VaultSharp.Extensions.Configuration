@@ -45,7 +45,7 @@ Task("Test")
     {
         DotNetTest(
             project.ToString(),
-            new DotNetCoreTest()
+            new DotNetTest()
             {
                 Configuration = configuration,
                 Logger = $"trx;LogFileName={project.GetFilenameWithoutExtension()}.trx",
@@ -69,18 +69,18 @@ Task("Pack")
             {
                 Configuration = configuration,
                 IncludeSymbols = true,
-                MSBuildSettings = new DotNetCoreMSBuildSettings().WithProperty("SymbolPackageFormat", "snupkg"),
+                MSBuildSettings = new DotNetMSBuildSettings().WithProperty("SymbolPackageFormat", "snupkg"),
                 NoBuild = true,
                 NoRestore = true,
                 OutputDirectory = artefactsDirectory,
-            });            
+            });
     });
 
 Task("Publish")
     .IsDependentOn("Pack")
     .DoesForEach(GetFiles($"{artefactsDirectory}/*.nupkg"), file =>
     {
-        DotNetCoreNuGetPush(file.ToString(), new DotNetCoreNuGetPushSettings {
+        NuGetPush(file.ToString(), new NuGetPushSettings {
             Source = "https://api.nuget.org/v3/index.json",
             ApiKey = nugetApiKey,
         });
