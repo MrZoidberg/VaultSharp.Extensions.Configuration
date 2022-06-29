@@ -38,13 +38,13 @@ jobs:
       shell: pwsh
     - name: 'Dotnet Cake Test'
       run: dotnet cake --target=Test
-      shell: pwsh
-    - name: Copy Coverage To Predictable Location
-      if: github.event_name == 'pull_request'
-      run: cd coverage & ls -lia
+      shell: pwsh    
     - name: Copy Coverage To Predictable Location
       if: github.event_name == 'pull_request'
       run: cp coverage/*/coverage.opencover.xml coverage/coverage.opencover.xml
+    - name: Copy Coverage To Predictable Location
+      if: github.event_name == 'pull_request'
+      run: cd coverage && ls -lia
     - name: Code Coverage Summary Report
       if: github.event_name == 'pull_request'
       uses: irongut/CodeCoverageSummary@v1.0.2
