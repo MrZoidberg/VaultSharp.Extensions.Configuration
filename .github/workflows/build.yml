@@ -41,12 +41,12 @@ jobs:
       shell: pwsh
     - name: Copy Coverage To Predictable Location
       if: github.event_name == 'pull_request'
-      run: cp coverage/*/coverage.cobertura.xml coverage/coverage.cobertura.xml
+      run: cp coverage/*/coverage.opencover.xml coverage/coverage.opencover.xml
     - name: Code Coverage Summary Report
       if: github.event_name == 'pull_request'
       uses: irongut/CodeCoverageSummary@v1.0.2
       with:
-        filename: coverage/coverage.cobertura.xml
+        filename: coverage/coverage.opencover.xml
         badge: true
         format: "markdown"
         output: "both"
