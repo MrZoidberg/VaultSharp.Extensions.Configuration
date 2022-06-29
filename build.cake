@@ -45,7 +45,7 @@ Task("Test")
     {
         DotNetTest(
             project.ToString(),
-            new DotNetTest()
+            new DotNetTestSettings()
             {
                 Configuration = configuration,
                 Logger = $"trx;LogFileName={project.GetFilenameWithoutExtension()}.trx",
