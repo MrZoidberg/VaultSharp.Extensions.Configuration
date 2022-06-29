@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         lfs: true
         fetch-depth: 0
@@ -27,9 +27,9 @@ jobs:
       run: git fetch --tags
       shell: pwsh
     - name: 'Install .NET Core SDK'
-      uses: actions/setup-dotnet@v1
+      uses: actions/setup-dotnet@v2
       with:
-        dotnet-version: 3.1.x
+        dotnet-version: '6.0.x'
     - name: 'Dotnet Tool Restore'
       run: dotnet tool restore
       shell: pwsh
