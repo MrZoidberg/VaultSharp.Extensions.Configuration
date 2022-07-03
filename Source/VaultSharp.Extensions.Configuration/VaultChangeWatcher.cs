@@ -23,10 +23,11 @@ namespace VaultSharp.Extensions.Configuration
         /// Initializes a new instance of the <see cref="VaultChangeWatcher"/> class.
         /// test.
         /// </summary>
-        /// <param name="configurationRoot">sdfsdf.</param>
-        /// <param name="logger">sdlvlkdfgf.</param>
-        public VaultChangeWatcher(IConfigurationRoot configurationRoot, ILogger? logger = null)
+        /// <param name="configuration">Instance of IConfiguration</param>
+        /// <param name="logger">Optional logger provider</param>
+        public VaultChangeWatcher(IConfiguration configuration, ILogger? logger = null)
         {
+            var configurationRoot = (IConfigurationRoot)configuration;
             if (configurationRoot == null)
             {
                 throw new ArgumentNullException(nameof(configurationRoot));
@@ -40,10 +41,10 @@ namespace VaultSharp.Extensions.Configuration
         /// <inheritdoc />
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            Dictionary<int, int> timers = new Dictionary<int, int>(); // key - index of config provider, value - timer
+            var timers = new Dictionary<int, int>(); // key - index of config provider, value - timer
             var minTime = int.MaxValue;
             var i = 0;
-            foreach (VaultConfigurationProvider provider in this._configProviders)
+            foreach (var provider in this._configProviders)
             {
                 var waitForSec = provider.ConfigurationSource.Options.ReloadCheckIntervalSeconds;
                 minTime = Math.Min(minTime, waitForSec);
