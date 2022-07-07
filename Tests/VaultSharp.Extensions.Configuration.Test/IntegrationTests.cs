@@ -254,6 +254,60 @@ namespace VaultSharp.Extensions.Configuration.Test
         }
 
         [Fact]
+        public async Task Success_WatcherTest_NoChanges()
+        {
+            // arrange
+            using CancellationTokenSource cts = new CancellationTokenSource();
+
+            var values =
+                new Dictionary<string, IEnumerable<KeyValuePair<string, object>>>
+                {
+                    { "test", new[] { new KeyValuePair<string, object>("option1", "value1") } },
+                    { "test/subsection", new[] { new KeyValuePair<string, object>("option2", "value2") } },
+                };
+
+            var container = this.PrepareVaultContainer();
+            try
+            {
+                await container.StartAsync().ConfigureAwait(false);
+                await this.LoadDataAsync(values).ConfigureAwait(false);
+
+
+                // act
+                ConfigurationBuilder builder = new ConfigurationBuilder();
+                builder.AddVaultConfiguration(
+                    () => new VaultOptions("http://localhost:8200", "root", reloadOnChange: true, reloadCheckIntervalSeconds: 10),
+                    "test",
+                    "secret",
+                    this._logger);
+                var configurationRoot = builder.Build();
+                VaultChangeWatcher changeWatcher = new VaultChangeWatcher(configurationRoot, this._logger);
+                await changeWatcher.StartAsync(cts.Token).ConfigureAwait(false);
+                var reloadToken = configurationRoot.GetReloadToken();
+
+                // assert
+                configurationRoot.GetValue<string>("option1").Should().Be("value1");
+                configurationRoot.GetSection("subsection").GetValue<string>("option2").Should().Be("value2");
+                reloadToken.HasChanged.Should().BeFalse();
+
+                // load new data and wait for reload
+                //await this.LoadDataAsync(values).ConfigureAwait(false);
+                await Task.Delay(TimeSpan.FromSeconds(20), cts.Token).ConfigureAwait(true);
+
+                reloadToken.HasChanged.Should().BeFalse();
+                configurationRoot.GetValue<string>("option1").Should().Be("value1");
+                configurationRoot.GetSection("subsection").GetValue<string>("option2").Should().Be("value2");
+
+                changeWatcher.Dispose();
+            }
+            finally
+            {
+                cts.Cancel();
+                await container.DisposeAsync().ConfigureAwait(false);
+            }
+        }
+
+        [Fact]
         public async Task Success_WatcherTest_OmitVaultKey_TokenAuth()
         {
             // arrange
