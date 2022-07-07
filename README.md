@@ -4,6 +4,8 @@
 
 VaultSharp.Extensions.Configuration is an extension to [VaultSharp](https://github.com/rajanadar/VaultSharp) that allows reading configuration options from Vault.
 
+VaultSharp.Extensions.Configuration is a .NET Standard 2.1 and .NET 6.0 based cross-platform C# Library.
+
 ## Get Started
 
 VaultSharp.Extensions.Configuration can be installed using the Nuget package manager or the dotnet CLI.
@@ -67,8 +69,10 @@ Keep in mind that your service should be registered as scoped or transient to re
 Also `IOptionsSnapshot` can return empty value in some cases ([it's .net core bug](https://github.com/dotnet/runtime/issues/37860))
 
 ## Configuration using additional characters for a configuration path
+
 This will be helpful when you want to flatten the structure of the secrets.
-For example the following two secret objects will evaluate to the same configuration if for the second object the `additionalCharactersForConfigurationPath` option is used with `new []{'.'}` value: 
+For example the following two secret objects will evaluate to the same configuration if for the second object the `additionalCharactersForConfigurationPath` option is used with `new []{'.'}` value:
+
 ```json
 {
     "secrets":
@@ -80,6 +84,7 @@ For example the following two secret objects will evaluate to the same configura
     }
 }
 ```
+
 ```json
 {
     "secrets":
@@ -128,7 +133,7 @@ All parameters are grouped and arranged in folders and can be managed within the
 
 There are two ways to create nested parameters.
 
-1. Description of nesting directly in Json format:
+1. Description of nesting directly in Json format (preferred approach):
 
 ```json
 {
