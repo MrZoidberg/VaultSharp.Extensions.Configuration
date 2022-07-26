@@ -77,10 +77,14 @@ namespace VaultSharp.Extensions.Configuration
 
                 using var ctx = new JoinableTaskContext();
                 var jtf = new JoinableTaskFactory(ctx);
-                jtf.RunAsync(
-                    async () => { await this.LoadVaultDataAsync(this._vaultClient).ConfigureAwait(true); }).Join();
+                var hasChanges = jtf.RunAsync(
+                    async () => await this.LoadVaultDataAsync(this._vaultClient).ConfigureAwait(true)).Join();
 
-                this.OnReload();
+                if (hasChanges)
+                {
+                    this.OnReload();
+                }
+
             }
             catch (Exception e) when (e is VaultApiException || e is System.Net.Http.HttpRequestException)
             {
@@ -88,8 +92,9 @@ namespace VaultSharp.Extensions.Configuration
             }
         }
 
-        private async Task LoadVaultDataAsync(IVaultClient vaultClient)
+        private async Task<bool> LoadVaultDataAsync(IVaultClient vaultClient)
         {
+            var hasChanges = false;
             await foreach (var secretData in this.ReadKeysAsync(vaultClient, this._source.BasePath))
             {
                 this._logger?.LogDebug($"VaultConfigurationProvider: got Vault data with key `{secretData.Key}`");
@@ -110,10 +115,12 @@ namespace VaultSharp.Extensions.Configuration
                 if (shouldSetValue)
                 {
                     this.SetData(data, this.ConfigurationSource.Options.OmitVaultKeyName ? string.Empty : key);
-
+                    hasChanges = true;
                     this._versionsCache[key] = secretData.SecretData.Metadata.Version;
                 }
             }
+
+            return hasChanges;
         }
 
         private void SetData<TValue>(IEnumerable<KeyValuePair<string, TValue>> data, string? key)

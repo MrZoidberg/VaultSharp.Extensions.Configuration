@@ -22,7 +22,7 @@ Task("Restore")
     .IsDependentOn("Clean")
     .Does(() =>
     {
-        DotNetCoreRestore();
+        DotNetRestore();
     });
 
 Task("Build")
@@ -30,9 +30,9 @@ Task("Build")
     .IsDependentOn("Restore")
     .Does(() =>
     {
-        DotNetCoreBuild(
+        DotNetBuild(
             ".",
-            new DotNetCoreBuildSettings()
+            new DotNetBuildSettings()
             {
                 Configuration = configuration,
                 NoRestore = true,
@@ -43,18 +43,19 @@ Task("Test")
     .Description("Runs unit tests and outputs test results to the artefacts directory.")
     .DoesForEach(GetFiles("./Tests/**/*.csproj"), project =>
     {
-        DotNetCoreTest(
+        DotNetTest(
             project.ToString(),
-            new DotNetCoreTestSettings()
+            new DotNetTestSettings()
             {
                 Configuration = configuration,
-                Logger = $"trx;LogFileName={project.GetFilenameWithoutExtension()}.trx",
+                //Logger = $"trx;LogFileName={project.GetFilenameWithoutExtension()}.trx",
                 NoBuild = true,
                 NoRestore = true,
-                ResultsDirectory = artefactsDirectory,
+                ResultsDirectory = "coverage",
                 ArgumentCustomization = x => x
                     .AppendSwitch("--logger", $"html;LogFileName={project.GetFilenameWithoutExtension()}.html")
                     .Append("--collect:\"XPlat Code Coverage\"")
+                    //.Append("--results-directory coverage")
                     .Append("--settings runsettings.xml"),
             });
     });
@@ -63,24 +64,24 @@ Task("Pack")
     .Description("Creates NuGet packages and outputs them to the artefacts directory.")
     .Does(() =>
     {
-        DotNetCorePack(
+        DotNetPack(
             "./Source/VaultSharp.Extensions.Configuration/VaultSharp.Extensions.Configuration.csproj",
-            new DotNetCorePackSettings()
+            new DotNetPackSettings()
             {
                 Configuration = configuration,
                 IncludeSymbols = true,
-                MSBuildSettings = new DotNetCoreMSBuildSettings().WithProperty("SymbolPackageFormat", "snupkg"),
+                MSBuildSettings = new DotNetMSBuildSettings().WithProperty("SymbolPackageFormat", "snupkg"),
                 NoBuild = true,
                 NoRestore = true,
                 OutputDirectory = artefactsDirectory,
-            });            
+            });
     });
 
 Task("Publish")
     .IsDependentOn("Pack")
     .DoesForEach(GetFiles($"{artefactsDirectory}/*.nupkg"), file =>
     {
-        DotNetCoreNuGetPush(file.ToString(), new DotNetCoreNuGetPushSettings {
+        NuGetPush(file.ToString(), new NuGetPushSettings {
             Source = "https://api.nuget.org/v3/index.json",
             ApiKey = nugetApiKey,
         });

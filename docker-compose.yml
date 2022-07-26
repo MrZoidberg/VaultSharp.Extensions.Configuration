@@ -6,10 +6,9 @@ x-common-environment-variables: &environment-variables
 
 services:
   sampleapp:
-    image: services/payments
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Source/SampleWebApp/Dockerfile
     ports:
       - 8080:80
     container_name: sample.app
@@ -17,7 +16,6 @@ services:
       <<: *environment-variables
       WAIT_HOSTS: vault:8200
     depends_on:
-      - mongo
       - vault
 
   vault:
@@ -27,7 +25,7 @@ services:
       - VAULT_UI=true
     container_name: vault
     volumes:
-      - ./secrets.json:/opt/secrets.json
+      - ./Source/SampleWebApp/secrets.json:/opt/secrets.json
     ports:
       - 8200:8200
 

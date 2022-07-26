@@ -7,7 +7,7 @@
   <PropertyGroup Label="Package">
     <Authors>Mikhail Merkulov</Authors>
     <Company>Mikhail Merkulov</Company>
-    <Copyright>Copyright 2020 © Mikhail Merkulov. All rights Reserved</Copyright>
+    <Copyright>Copyright 2022 © Mikhail Merkulov. All rights Reserved</Copyright>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/MrZoidberg/VaultSharp.Extensions.Configuration</PackageProjectUrl>
@@ -15,10 +15,8 @@
     <RepositoryType>git</RepositoryType>
     <PackageReleaseNotes>https://github.com/MrZoidberg/VaultSharp.Extensions.Configuration/releases</PackageReleaseNotes>
   </PropertyGroup>
-  <ItemGroup Label="Package References">
-    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" PrivateAssets="All" Version="5.0.3" />
-    <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" PrivateAssets="All" Version="16.10.56" />
-    <PackageReference Include="MinVer" PrivateAssets="All" Version="2.5.0" />
-    <PackageReference Include="StyleCop.Analyzers" PrivateAssets="All" Version="1.1.118" />
-  </ItemGroup>
+
+  <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+  </PropertyGroup>
 </Project>

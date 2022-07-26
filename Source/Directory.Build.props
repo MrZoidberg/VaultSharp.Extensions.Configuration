@@ -20,8 +20,4 @@
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
   </PropertyGroup>
 
-  <ItemGroup Label="Package References">
-    <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" Version="1.0.0" />
-  </ItemGroup>
-  
 </Project>
