@@ -358,6 +358,39 @@ namespace VaultSharp.Extensions.Configuration.Test
                 await container.DisposeAsync().ConfigureAwait(false);
             }
         }
+
+        [Fact]
+        public async Task Success_AuthMethod()
+        {
+            // arrange
+            using CancellationTokenSource cts = new CancellationTokenSource();
+            string jsonData = @"{""option1"": ""value1"",""subsection"":{""option2"": ""value2""}}";
+
+            var container = this.PrepareVaultContainer();
+            try
+            {
+                await container.StartAsync(cts.Token).ConfigureAwait(false);
+                await this.LoadDataAsync("myservice-config", jsonData).ConfigureAwait(false);
+
+                // act
+                ConfigurationBuilder builder = new ConfigurationBuilder();
+                builder.AddVaultConfiguration(
+                    () => new VaultOptions("http://localhost:8200", new TokenAuthMethodInfo("root"), reloadOnChange: true, reloadCheckIntervalSeconds: 10, omitVaultKeyName: true),
+                    "myservice-config",
+                    "secret",
+                    this._logger);
+                var configurationRoot = builder.Build();
+
+                // assert
+                configurationRoot.GetValue<string>("option1").Should().Be("value1");
+                configurationRoot.GetSection("subsection").GetValue<string>("option2").Should().Be("value2");
+            }
+            finally
+            {
+                cts.Cancel();
+                await container.DisposeAsync().ConfigureAwait(false);
+            }
+        }
     }
 
     public class TestConfigObject

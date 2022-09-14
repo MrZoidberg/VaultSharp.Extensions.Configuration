@@ -53,7 +53,11 @@ namespace VaultSharp.Extensions.Configuration
                 if (this._vaultClient == null)
                 {
                     IAuthMethodInfo authMethod;
-                    if (!string.IsNullOrEmpty(this._source.Options.VaultRoleId) &&
+                    if (this._source.Options.AuthMethod != null)
+                    {
+                        authMethod = this._source.Options.AuthMethod;
+                    }
+                    else if (!string.IsNullOrEmpty(this._source.Options.VaultRoleId) &&
                         !string.IsNullOrEmpty(this._source.Options.VaultSecret))
                     {
                         this._logger?.LogDebug("VaultConfigurationProvider: using AppRole authentication");

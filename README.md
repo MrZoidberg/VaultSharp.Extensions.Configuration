@@ -104,14 +104,29 @@ config.AddVaultConfiguration(
         "secret");
 ```
 new VaultOptions("http://localhost:8200", "root", null, null, false, 300, false, new []{'.'}),
-## Configuration using environmnt variables
+## Configuration using environment variables
 
-Alternatively, you can configure Vault connection using next environmnt variables:
+Alternatively, you can configure Vault connection using next environment variables:
 
 - `VAULT_ADDR` : Address of the Vault instance. Default value is `"http://locahost:8200`.
 - `VAULT_TOKEN` : Vault token. Used for token-based authentication. Default value is `root`.
 - `VAULT_ROLEID` : Vault AppRole ID. Used for AppRole-based authentication.
 - `VAULT_SECRET` : Vault AppRole secret. Used for AppRole-based authentication.
+
+## Configuration using IAuthMethodInfo
+
+You can configure Vault connection using any supported auth method (look at https://github.com/rajanadar/VaultSharp#auth-methods):
+
+```csharp
+config.AddVaultConfiguration(
+        () => new VaultOptions(
+            "htpp://localhost:8200",
+            new KerberosAuthMethodInfo(),
+            reloadOnChange: true,
+            reloadCheckIntervalSeconds: 60),
+        "sampleapp",
+        "secret");
+```
 
 ## Preparing secrets in Vault
 
