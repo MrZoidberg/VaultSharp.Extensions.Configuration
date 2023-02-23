@@ -2,15 +2,19 @@ namespace VaultSharp.Extensions.Configuration.Test
 {
     using System;
     using System.Collections.Generic;
+    using System.Net;
     using System.Threading;
     using System.Threading.Tasks;
     using DotNet.Testcontainers.Builders;
     using DotNet.Testcontainers.Containers;
     using FluentAssertions;
     using Microsoft.Extensions.Configuration;
+    using Microsoft.Extensions.Logging;
+    using Moq;
     using Newtonsoft.Json;
     using Serilog;
     using Serilog.Extensions.Logging;
+    using VaultSharp.Core;
     using VaultSharp.V1.AuthMethods.Token;
     using Xunit;
     using ILogger = Microsoft.Extensions.Logging.ILogger;
@@ -384,6 +388,45 @@ namespace VaultSharp.Extensions.Configuration.Test
                 // assert
                 configurationRoot.GetValue<string>("option1").Should().Be("value1");
                 configurationRoot.GetSection("subsection").GetValue<string>("option2").Should().Be("value2");
+            }
+            finally
+            {
+                cts.Cancel();
+                await container.DisposeAsync().ConfigureAwait(false);
+            }
+        }
+
+
+        [Fact]
+        public async Task Failure_PermissionDenied()
+        {
+            // arrange
+            using var cts = new CancellationTokenSource();
+            var jsonData = @"{""option1"": ""value1"",""subsection"":{""option2"": ""value2""}}";
+            var loggerMock = new Mock<ILogger<IntegrationTests>>();
+            var container = this.PrepareVaultContainer();
+            try
+            {
+                await container.StartAsync(cts.Token).ConfigureAwait(false);
+                await this.LoadDataAsync("myservice-config", jsonData).ConfigureAwait(false);
+
+                // act
+                var builder = new ConfigurationBuilder();
+                builder.AddVaultConfiguration(
+                    () => new VaultOptions("http://localhost:8200", new TokenAuthMethodInfo("NON VALID TOKEN"), reloadOnChange: true, reloadCheckIntervalSeconds: 10, omitVaultKeyName: true),
+                    "myservice-config",
+                    "secret",
+                    loggerMock.Object);
+                var configurationRoot = builder.Build();
+
+                // assert
+                loggerMock.Verify(
+                    x => x.Log(
+                        It.Is<LogLevel>(l => l == LogLevel.Error),
+                        It.IsAny<EventId>(),
+                        It.Is<It.IsAnyType>((v, t) => v.ToString() == "Cannot load configuration from Vault"),
+                        It.Is<VaultApiException>(exception => exception.HttpStatusCode == HttpStatusCode.Forbidden),
+                        It.Is<Func<It.IsAnyType, Exception?, string>>((v, t) => true)), Times.Once);
             }
             finally
             {

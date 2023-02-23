@@ -4,6 +4,7 @@ namespace VaultSharp.Extensions.Configuration
     using System.Collections.Generic;
     using System.Globalization;
     using System.Linq;
+    using System.Net;
     using System.Text;
     using System.Threading.Tasks;
     using Microsoft.Extensions.Configuration;
@@ -112,7 +113,7 @@ namespace VaultSharp.Extensions.Configuration
                 if (this._versionsCache.TryGetValue(key, out var currentVersion))
                 {
                     shouldSetValue = secretData.SecretData.Metadata.Version > currentVersion;
-                    string keyMsg = shouldSetValue ? "has new version" : "is outdated";
+                    var keyMsg = shouldSetValue ? "has new version" : "is outdated";
                     this._logger?.LogDebug($"VaultConfigurationProvider: Data for key `{secretData.Key}` {keyMsg}");
                 }
 
@@ -224,7 +225,7 @@ namespace VaultSharp.Extensions.Configuration
             {
                 keys = await vaultClient.V1.Secrets.KeyValue.V2.ReadSecretPathsAsync(folderPath, this._source.MountPoint).ConfigureAwait(false);
             }
-            catch (VaultApiException)
+            catch (VaultApiException ex) when (ex.HttpStatusCode == HttpStatusCode.NotFound)
             {
                 // this is key, not a folder
             }
@@ -254,7 +255,7 @@ namespace VaultSharp.Extensions.Configuration
                     .ConfigureAwait(false);
                 keyedSecretData = new KeyedSecretData(valuePath, secretData.Data);
             }
-            catch (VaultApiException)
+            catch (VaultApiException ex) when (ex.HttpStatusCode == HttpStatusCode.NotFound)
             {
                 // this is folder, not a key
             }
