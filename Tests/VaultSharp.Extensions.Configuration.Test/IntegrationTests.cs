@@ -2,7 +2,9 @@ namespace VaultSharp.Extensions.Configuration.Test
 {
     using System;
     using System.Collections.Generic;
+    using System.IO;
     using System.Net;
+    using System.Text.Json;
     using System.Threading;
     using System.Threading.Tasks;
     using DotNet.Testcontainers.Builders;
@@ -11,10 +13,11 @@ namespace VaultSharp.Extensions.Configuration.Test
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.Logging;
     using Moq;
-    using Newtonsoft.Json;
+    using Newtonsoft.Json.Linq;
     using Serilog;
     using Serilog.Extensions.Logging;
     using VaultSharp.Core;
+    using VaultSharp.V1.AuthMethods.AppRole;
     using VaultSharp.V1.AuthMethods.Token;
     using Xunit;
     using ILogger = Microsoft.Extensions.Logging.ILogger;
@@ -33,17 +36,25 @@ namespace VaultSharp.Extensions.Configuration.Test
             this._logger = new SerilogLoggerProvider(Log.Logger).CreateLogger(nameof(IntegrationTests));
         }
 
-        private TestcontainersContainer PrepareVaultContainer()
+        private IContainer PrepareVaultContainer(string? script = null)
         {
-            var testcontainersBuilder = new TestcontainersBuilder<TestcontainersContainer>()
+            var builder = new ContainerBuilder()
                 .WithImage("vault")
                 .WithName("vaultsharp_test")
                 .WithPortBinding(8200, 8200)
                 .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(8200))
+                .WithEnvironment("VAULT_UI", "true")
                 .WithEnvironment("VAULT_DEV_ROOT_TOKEN_ID", "root")
                 .WithEnvironment("VAULT_DEV_LISTEN_ADDRESS", "0.0.0.0:8200");
 
-            return testcontainersBuilder.Build();
+            if (!string.IsNullOrEmpty(script))
+            {
+                var appRoleScript = Path.Combine(Environment.CurrentDirectory, script);
+                builder = builder
+                    .WithBindMount(appRoleScript, "/tmp/script.sh");
+            }
+
+            return builder.Build();
         }
 
         private async Task LoadDataAsync(Dictionary<string, IEnumerable<KeyValuePair<string, object>>> values)
@@ -66,16 +77,18 @@ namespace VaultSharp.Extensions.Configuration.Test
             }
         }
 
-        private async Task LoadDataAsync(string secretPath, string jsonData)
+        private async Task<(string RoleId, string SecretId)> GetAppRoleCreds(string roleName)
         {
             var authMethod = new TokenAuthMethodInfo("root");
 
             var vaultClientSettings = new VaultClientSettings("http://localhost:8200", authMethod) { SecretsEngineMountPoints = { KeyValueV2 = "secret" } };
             IVaultClient vaultClient = new VaultClient(vaultClientSettings);
 
-            var dictionary = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonData);
-            await vaultClient.V1.Secrets.KeyValue.V2.WriteSecretAsync(secretPath, dictionary).ConfigureAwait(false);
+            var roleId = await vaultClient.V1.Auth.AppRole.GetRoleIdAsync(roleName);
+            var secretId = await vaultClient.V1.Auth.AppRole.PullNewSecretIdAsync(roleName);
+            return (RoleId: roleId.Data.RoleId, SecretId: secretId.Data.SecretId);
         }
+
 
         [Fact]
         public async Task Success_SimpleTest_TokenAuth()
@@ -129,7 +142,7 @@ namespace VaultSharp.Extensions.Configuration.Test
                 // act
                 ConfigurationBuilder builder = new ConfigurationBuilder();
                 builder.AddVaultConfiguration(
-                    () => new VaultOptions("http://localhost:8200", "root", additionalCharactersForConfigurationPath: new []{'.'}),
+                    () => new VaultOptions("http://localhost:8200", "root", additionalCharactersForConfigurationPath: new[] { '.' }),
                     "test",
                     "secret",
                     this._logger);
@@ -168,12 +181,23 @@ namespace VaultSharp.Extensions.Configuration.Test
         [Fact]
         public async Task Success_SimpleTestOmitVaultKey_TokenAuth()
         {
-            string jsonData = @"{""option1"": ""value1"",""subsection"":{""option2"": ""value2""}}";
+            var values =
+               new Dictionary<string, IEnumerable<KeyValuePair<string, object>>>
+               {
+                    {
+                        "myservice-config", new[]
+                        {
+                            new KeyValuePair<string, object>("option1", "value1"),
+                            new KeyValuePair<string, object>("subsection", new {option2 = "value2"}),
+                        }
+                    },
+               };
+
             var container = this.PrepareVaultContainer();
             try
             {
                 await container.StartAsync().ConfigureAwait(false);
-                await this.LoadDataAsync("myservice-config", jsonData).ConfigureAwait(false);
+                await this.LoadDataAsync(values).ConfigureAwait(false);
 
                 // act
                 ConfigurationBuilder builder = new ConfigurationBuilder();
@@ -316,13 +340,23 @@ namespace VaultSharp.Extensions.Configuration.Test
         {
             // arrange
             using CancellationTokenSource cts = new CancellationTokenSource();
-            string jsonData = @"{""option1"": ""value1"",""subsection"":{""option2"": ""value2""}}";
+            var values =
+             new Dictionary<string, IEnumerable<KeyValuePair<string, object>>>
+             {
+                    {
+                        "myservice-config", new[]
+                        {
+                            new KeyValuePair<string, object>("option1", "value1"),
+                            new KeyValuePair<string, object>("subsection", new {option2 = "value2"}),
+                        }
+                    },
+             };
 
             var container = this.PrepareVaultContainer();
             try
             {
                 await container.StartAsync(cts.Token).ConfigureAwait(false);
-                await this.LoadDataAsync("myservice-config", jsonData).ConfigureAwait(false);
+                await this.LoadDataAsync(values).ConfigureAwait(false);
 
 
                 // act
@@ -343,10 +377,20 @@ namespace VaultSharp.Extensions.Configuration.Test
                 reloadToken.HasChanged.Should().BeFalse();
 
                 // load new data and wait for reload
-                jsonData =
-                    @"{""option1"": ""value1_new"",""subsection"": {""option2"": ""value2_new""},""subsection3"": {""option3"": ""value3_new""}}";
+                values =
+                 new Dictionary<string, IEnumerable<KeyValuePair<string, object>>>
+                 {
+                        {
+                            "myservice-config", new[]
+                            {
+                                new KeyValuePair<string, object>("option1", "value1_new"),
+                                new KeyValuePair<string, object>("subsection", new {option2 = "value2_new"}),
+                                new KeyValuePair<string, object>("subsection3", new {option3 = "value3_new"}),
+                            }
+                        },
+                 };
 
-                await this.LoadDataAsync("myservice-config", jsonData).ConfigureAwait(false);
+                await this.LoadDataAsync(values).ConfigureAwait(false);
                 await Task.Delay(TimeSpan.FromSeconds(15), cts.Token).ConfigureAwait(true);
 
                 reloadToken.HasChanged.Should().BeTrue();
@@ -364,22 +408,124 @@ namespace VaultSharp.Extensions.Configuration.Test
         }
 
         [Fact]
-        public async Task Success_AuthMethod()
+        public async Task Success_TokenAuthMethod()
         {
             // arrange
             using CancellationTokenSource cts = new CancellationTokenSource();
-            string jsonData = @"{""option1"": ""value1"",""subsection"":{""option2"": ""value2""}}";
+            var values =
+              new Dictionary<string, IEnumerable<KeyValuePair<string, object>>>
+              {
+                    {
+                        "myservice-config", new[]
+                        {
+                            new KeyValuePair<string, object>("option1", "value1"),
+                            new KeyValuePair<string, object>("subsection", new {option2 = "value2"}),
+                        }
+                    },
+              };
 
             var container = this.PrepareVaultContainer();
             try
             {
                 await container.StartAsync(cts.Token).ConfigureAwait(false);
-                await this.LoadDataAsync("myservice-config", jsonData).ConfigureAwait(false);
+                await this.LoadDataAsync(values).ConfigureAwait(false);
 
                 // act
                 ConfigurationBuilder builder = new ConfigurationBuilder();
                 builder.AddVaultConfiguration(
                     () => new VaultOptions("http://localhost:8200", new TokenAuthMethodInfo("root"), reloadOnChange: true, reloadCheckIntervalSeconds: 10, omitVaultKeyName: true),
+                    "myservice-config",
+                    "secret",
+                    this._logger);
+                var configurationRoot = builder.Build();
+
+                // assert
+                configurationRoot.GetValue<string>("option1").Should().Be("value1");
+                configurationRoot.GetSection("subsection").GetValue<string>("option2").Should().Be("value2");
+            }
+            finally
+            {
+                cts.Cancel();
+                await container.DisposeAsync().ConfigureAwait(false);
+            }
+        }
+
+        [Fact]
+        public async Task Success_AppRoleAuthMethod()
+        {
+            // arrange
+            using CancellationTokenSource cts = new CancellationTokenSource();
+            var values =
+             new Dictionary<string, IEnumerable<KeyValuePair<string, object>>>
+             {
+                    {
+                        "myservice-config", new[]
+                        {
+                            new KeyValuePair<string, object>("option1", "value1"),
+                            new KeyValuePair<string, object>("subsection", new {option2 = "value2"}),
+                        }
+                    },
+             };
+
+            var container = this.PrepareVaultContainer("approle.sh");
+            try
+            {
+                await container.StartAsync(cts.Token).ConfigureAwait(false);
+                var execResult = await container.ExecAsync(new[] { "/tmp/script.sh" });
+                execResult.ExitCode.Should().Be(0);
+                var (RoleId, SecretId) = await this.GetAppRoleCreds("test-role");
+                await this.LoadDataAsync(values).ConfigureAwait(false);
+
+                // act
+                ConfigurationBuilder builder = new ConfigurationBuilder();
+                builder.AddVaultConfiguration(
+                    () => new VaultOptions("http://localhost:8200", new AppRoleAuthMethodInfo(RoleId, SecretId), reloadOnChange: true, reloadCheckIntervalSeconds: 10, omitVaultKeyName: true),
+                    "myservice-config",
+                    "secret",
+                    this._logger);
+                var configurationRoot = builder.Build();
+
+                // assert
+                configurationRoot.GetValue<string>("option1").Should().Be("value1");
+                configurationRoot.GetSection("subsection").GetValue<string>("option2").Should().Be("value2");
+            }
+            finally
+            {
+                cts.Cancel();
+                await container.DisposeAsync().ConfigureAwait(false);
+            }
+        }
+
+        [Fact]
+        public async Task Success_AppRoleAuthMethodNoListPermissions()
+        {
+            // arrange
+            using CancellationTokenSource cts = new CancellationTokenSource();
+            var values =
+             new Dictionary<string, IEnumerable<KeyValuePair<string, object>>>
+             {
+                    {
+                        "myservice-config", new[]
+                        {
+                            new KeyValuePair<string, object>("option1", "value1"),
+                            new KeyValuePair<string, object>("subsection", new {option2 = "value2"}),
+                        }
+                    },
+             };
+
+            var container = this.PrepareVaultContainer("approle_nolist.sh");
+            try
+            {
+                await container.StartAsync(cts.Token).ConfigureAwait(false);
+                var execResult = await container.ExecAsync(new[] { "/tmp/script.sh" });
+                execResult.ExitCode.Should().Be(0);
+                var (RoleId, SecretId) = await this.GetAppRoleCreds("test-role");
+                await this.LoadDataAsync(values).ConfigureAwait(false);
+
+                // act
+                ConfigurationBuilder builder = new ConfigurationBuilder();
+                builder.AddVaultConfiguration(
+                    () => new VaultOptions("http://localhost:8200", new AppRoleAuthMethodInfo(RoleId, SecretId), reloadOnChange: true, reloadCheckIntervalSeconds: 10, omitVaultKeyName: true, alwaysAddTrailingSlashToBasePath: false),
                     "myservice-config",
                     "secret",
                     this._logger);
@@ -402,13 +548,23 @@ namespace VaultSharp.Extensions.Configuration.Test
         {
             // arrange
             using var cts = new CancellationTokenSource();
-            var jsonData = @"{""option1"": ""value1"",""subsection"":{""option2"": ""value2""}}";
+            var values =
+              new Dictionary<string, IEnumerable<KeyValuePair<string, object>>>
+              {
+                    {
+                        "myservice-config", new[]
+                        {
+                            new KeyValuePair<string, object>("option1", "value1"),
+                            new KeyValuePair<string, object>("subsection", new {option2 = "value2"}),
+                        }
+                    },
+              };
             var loggerMock = new Mock<ILogger<IntegrationTests>>();
             var container = this.PrepareVaultContainer();
             try
             {
                 await container.StartAsync(cts.Token).ConfigureAwait(false);
-                await this.LoadDataAsync("myservice-config", jsonData).ConfigureAwait(false);
+                await this.LoadDataAsync(values).ConfigureAwait(false);
 
                 // act
                 var builder = new ConfigurationBuilder();
