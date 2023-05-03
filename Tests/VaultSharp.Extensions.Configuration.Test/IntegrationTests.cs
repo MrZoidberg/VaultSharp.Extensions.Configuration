@@ -472,7 +472,11 @@ namespace VaultSharp.Extensions.Configuration.Test
             {
                 await container.StartAsync(cts.Token).ConfigureAwait(false);
                 var execResult = await container.ExecAsync(new[] { "/tmp/script.sh" });
-                execResult.ExitCode.Should().Be(0);
+                if (execResult.ExitCode != 0)
+                {
+                    string msg = execResult.Stdout + Environment.NewLine + execResult.Stderr;
+                    throw new Exception(msg);
+                }
                 var (RoleId, SecretId) = await this.GetAppRoleCreds("test-role");
                 await this.LoadDataAsync(values).ConfigureAwait(false);
 
@@ -518,7 +522,11 @@ namespace VaultSharp.Extensions.Configuration.Test
             {
                 await container.StartAsync(cts.Token).ConfigureAwait(false);
                 var execResult = await container.ExecAsync(new[] { "/tmp/script.sh" });
-                execResult.ExitCode.Should().Be(0);
+                if (execResult.ExitCode != 0)
+                {
+                    string msg = execResult.Stdout + Environment.NewLine + execResult.Stderr;
+                    throw new Exception(msg);
+                }                
                 var (RoleId, SecretId) = await this.GetAppRoleCreds("test-role");
                 await this.LoadDataAsync(values).ConfigureAwait(false);
 
