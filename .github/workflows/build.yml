@@ -30,6 +30,9 @@ jobs:
       uses: actions/setup-dotnet@v2
       with:
         dotnet-version: '6.0.x'
+    - name: 'Fix permissions'
+      run: chmod +x ./Tests/VaultSharp.Extensions.Configuration.Test/approle.sh && chmod +x ./Tests/VaultSharp.Extensions.Configuration.Test/approle_nolist.sh
+      shell: bash
     - name: 'Dotnet Tool Restore'
       run: dotnet tool restore
       shell: pwsh
