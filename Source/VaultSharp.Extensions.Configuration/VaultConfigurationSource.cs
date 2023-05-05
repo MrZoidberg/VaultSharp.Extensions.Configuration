@@ -19,7 +19,7 @@ namespace VaultSharp.Extensions.Configuration
         /// </summary>
         internal const string DefaultVaultToken = "root";
 
-        private readonly ILogger? _logger;
+        private readonly ILogger? logger;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="VaultConfigurationSource"/> class.
@@ -30,7 +30,7 @@ namespace VaultSharp.Extensions.Configuration
         /// <param name="logger">Logger instance.</param>
         public VaultConfigurationSource(VaultOptions options, string basePath, string? mountPoint = null, ILogger? logger = null)
         {
-            this._logger = logger;
+            this.logger = logger;
             this.Options = options;
             this.BasePath = basePath;
             this.MountPoint = mountPoint ?? SecretsEngineMountPoints.Defaults.KeyValueV2;
@@ -56,6 +56,6 @@ namespace VaultSharp.Extensions.Configuration
         /// </summary>
         /// <param name="builder">Configuration builder.</param>
         /// <returns>Instance of <see cref="IConfigurationProvider"/>.</returns>
-        public IConfigurationProvider Build(IConfigurationBuilder builder) => new VaultConfigurationProvider(this, this._logger);
+        public IConfigurationProvider Build(IConfigurationBuilder builder) => new VaultConfigurationProvider(this, this.logger);
     }
 }

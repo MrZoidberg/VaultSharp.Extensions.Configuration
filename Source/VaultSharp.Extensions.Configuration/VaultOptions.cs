@@ -21,6 +21,7 @@ namespace VaultSharp.Extensions.Configuration
         /// <param name="omitVaultKeyName">Omit Vault Key Name in Configuration Keys.</param>
         /// <param name="additionalCharactersForConfigurationPath">Additional characters for the Configuration path.</param>
         /// <param name="namespace">Vault namespace.</param>
+        /// <param name="alwaysAddTrailingSlashToBasePath">Should a trailing slash be added to the base path. See AlwaysAddTrailingSlashToBasePath property for details </param>
         public VaultOptions(
             string vaultAddress,
             string? vaultToken,
@@ -30,7 +31,8 @@ namespace VaultSharp.Extensions.Configuration
             int reloadCheckIntervalSeconds = 300,
             bool omitVaultKeyName = false,
             IEnumerable<char>? additionalCharactersForConfigurationPath = null,
-            string? @namespace = null)
+            string? @namespace = null,
+            bool alwaysAddTrailingSlashToBasePath = true)
         {
             this.VaultAddress = vaultAddress;
             this.VaultToken = vaultToken;
@@ -41,6 +43,7 @@ namespace VaultSharp.Extensions.Configuration
             this.OmitVaultKeyName = omitVaultKeyName;
             this.AdditionalCharactersForConfigurationPath = additionalCharactersForConfigurationPath ?? Array.Empty<char>();
             this.Namespace = @namespace;
+            this.AlwaysAddTrailingSlashToBasePath = alwaysAddTrailingSlashToBasePath;
         }
 
         /// <summary>
@@ -53,6 +56,7 @@ namespace VaultSharp.Extensions.Configuration
         /// <param name="omitVaultKeyName">Omit Vault Key Name in Configuration Keys.</param>
         /// <param name="additionalCharactersForConfigurationPath">Additional characters for the Configuration path.</param>
         /// <param name="namespace">Vault namespace.</param>
+        /// <param name="alwaysAddTrailingSlashToBasePath">Should a trailing slash be added to the base path. See AlwaysAddTrailingSlashToBasePath property for details </param>
         public VaultOptions(
             string vaultAddress,
             IAuthMethodInfo authMethod,
@@ -60,7 +64,8 @@ namespace VaultSharp.Extensions.Configuration
             int reloadCheckIntervalSeconds = 300,
             bool omitVaultKeyName = false,
             IEnumerable<char>? additionalCharactersForConfigurationPath = null,
-            string? @namespace = null)
+            string? @namespace = null,
+            bool alwaysAddTrailingSlashToBasePath = true)
         {
             this.VaultAddress = vaultAddress;
             this.AuthMethod = authMethod;
@@ -69,6 +74,7 @@ namespace VaultSharp.Extensions.Configuration
             this.OmitVaultKeyName = omitVaultKeyName;
             this.AdditionalCharactersForConfigurationPath = additionalCharactersForConfigurationPath ?? Array.Empty<char>();
             this.Namespace = @namespace;
+            this.AlwaysAddTrailingSlashToBasePath = alwaysAddTrailingSlashToBasePath;
         }
 
         /// <summary>
@@ -121,5 +127,12 @@ namespace VaultSharp.Extensions.Configuration
         /// Gets Vault namespace.
         /// </summary>
         public string? Namespace { get; }
+
+        /// <summary>
+        /// Gets the value indicating whether to always add a trailing slash to the base path.
+        /// If it is true, the base path is considered to be a "folder" with nested keys, otherwise the base path is considered to be a key itself.
+        /// It is true by default. Set to false if you don't have permissions to list keys in the base path.
+        /// </summary>
+        public bool AlwaysAddTrailingSlashToBasePath { get; }
     }
 }

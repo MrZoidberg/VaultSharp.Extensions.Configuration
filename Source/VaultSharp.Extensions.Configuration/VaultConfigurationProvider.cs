@@ -6,11 +6,11 @@ namespace VaultSharp.Extensions.Configuration
     using System.Linq;
     using System.Net;
     using System.Text;
+    using System.Text.Json;
     using System.Threading.Tasks;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.Logging;
-    using Microsoft.VisualStudio.Threading;
-    using Newtonsoft.Json.Linq;
+    using Microsoft.VisualStudio.Threading;  
     using VaultSharp;
     using VaultSharp.Core;
     using VaultSharp.V1.AuthMethods;
@@ -23,11 +23,9 @@ namespace VaultSharp.Extensions.Configuration
     /// </summary>
     public class VaultConfigurationProvider : ConfigurationProvider
     {
-        private readonly ILogger? _logger;
-
-        private VaultConfigurationSource _source;
-        private IVaultClient? _vaultClient;
-        private Dictionary<string, int> _versionsCache;
+        private readonly ILogger? logger;
+        private IVaultClient? vaultClient;
+        private readonly Dictionary<string, int> versionsCache;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="VaultConfigurationProvider"/> class.
@@ -36,54 +34,54 @@ namespace VaultSharp.Extensions.Configuration
         /// <param name="logger">Logger instance.</param>
         public VaultConfigurationProvider(VaultConfigurationSource source, ILogger? logger)
         {
-            this._logger = logger;
-            this._source = source ?? throw new ArgumentNullException(nameof(source));
-            this._versionsCache = new Dictionary<string, int>();
+            this.logger = logger;
+            this.ConfigurationSource = source ?? throw new ArgumentNullException(nameof(source));
+            this.versionsCache = new Dictionary<string, int>();
         }
 
         /// <summary>
         /// Gets <see cref="VaultConfigurationSource"/>.
         /// </summary>
-        internal VaultConfigurationSource ConfigurationSource => this._source;
+        internal VaultConfigurationSource ConfigurationSource { get; private set; }
 
         /// <inheritdoc/>
         public override void Load()
         {
             try
             {
-                if (this._vaultClient == null)
+                if (this.vaultClient == null)
                 {
                     IAuthMethodInfo authMethod;
-                    if (this._source.Options.AuthMethod != null)
+                    if (this.ConfigurationSource.Options.AuthMethod != null)
                     {
-                        authMethod = this._source.Options.AuthMethod;
+                        authMethod = this.ConfigurationSource.Options.AuthMethod;
                     }
-                    else if (!string.IsNullOrEmpty(this._source.Options.VaultRoleId) &&
-                        !string.IsNullOrEmpty(this._source.Options.VaultSecret))
+                    else if (!string.IsNullOrEmpty(this.ConfigurationSource.Options.VaultRoleId) &&
+                        !string.IsNullOrEmpty(this.ConfigurationSource.Options.VaultSecret))
                     {
-                        this._logger?.LogDebug("VaultConfigurationProvider: using AppRole authentication");
+                        this.logger?.LogDebug("VaultConfigurationProvider: using AppRole authentication");
                         authMethod = new AppRoleAuthMethodInfo(
-                            this._source.Options.VaultRoleId,
-                            this._source.Options.VaultSecret);
+                            this.ConfigurationSource.Options.VaultRoleId,
+                            this.ConfigurationSource.Options.VaultSecret);
                     }
                     else
                     {
-                        this._logger?.LogDebug("VaultConfigurationProvider: using Token authentication");
-                        authMethod = new TokenAuthMethodInfo(this._source.Options.VaultToken);
+                        this.logger?.LogDebug("VaultConfigurationProvider: using Token authentication");
+                        authMethod = new TokenAuthMethodInfo(this.ConfigurationSource.Options.VaultToken);
                     }
 
-                    var vaultClientSettings = new VaultClientSettings(this._source.Options.VaultAddress, authMethod)
+                    var vaultClientSettings = new VaultClientSettings(this.ConfigurationSource.Options.VaultAddress, authMethod)
                     {
                         UseVaultTokenHeaderInsteadOfAuthorizationHeader = true,
-                        Namespace = this._source.Options.Namespace,
+                        Namespace = this.ConfigurationSource.Options.Namespace,
                     };
-                    this._vaultClient = new VaultClient(vaultClientSettings);
+                    this.vaultClient = new VaultClient(vaultClientSettings);
                 }
 
                 using var ctx = new JoinableTaskContext();
                 var jtf = new JoinableTaskFactory(ctx);
                 var hasChanges = jtf.RunAsync(
-                    async () => await this.LoadVaultDataAsync(this._vaultClient).ConfigureAwait(true)).Join();
+                    async () => await this.LoadVaultDataAsync(this.vaultClient).ConfigureAwait(true)).Join();
 
                 if (hasChanges)
                 {
@@ -93,35 +91,35 @@ namespace VaultSharp.Extensions.Configuration
             }
             catch (Exception e) when (e is VaultApiException || e is System.Net.Http.HttpRequestException)
             {
-                this._logger?.Log(LogLevel.Error, e, "Cannot load configuration from Vault");
+                this.logger?.Log(LogLevel.Error, e, "Cannot load configuration from Vault");
             }
         }
 
         private async Task<bool> LoadVaultDataAsync(IVaultClient vaultClient)
         {
             var hasChanges = false;
-            await foreach (var secretData in this.ReadKeysAsync(vaultClient, this._source.BasePath))
+            await foreach (var secretData in this.ReadKeysAsync(vaultClient, this.ConfigurationSource.BasePath))
             {
-                this._logger?.LogDebug($"VaultConfigurationProvider: got Vault data with key `{secretData.Key}`");
+                this.logger?.LogDebug($"VaultConfigurationProvider: got Vault data with key `{secretData.Key}`");
 
                 var key = secretData.Key;
-                key = key.TrimStart('/')[this._source.BasePath.TrimStart('/').Length..].TrimStart('/').Replace('/', ':');
+                key = key.TrimStart('/')[this.ConfigurationSource.BasePath.TrimStart('/').Length..].TrimStart('/').Replace('/', ':');
                 key = this.ReplaceTheAdditionalCharactersForConfigurationPath(key);
                 var data = secretData.SecretData.Data;
 
                 var shouldSetValue = true;
-                if (this._versionsCache.TryGetValue(key, out var currentVersion))
+                if (this.versionsCache.TryGetValue(key, out var currentVersion))
                 {
                     shouldSetValue = secretData.SecretData.Metadata.Version > currentVersion;
                     var keyMsg = shouldSetValue ? "has new version" : "is outdated";
-                    this._logger?.LogDebug($"VaultConfigurationProvider: Data for key `{secretData.Key}` {keyMsg}");
+                    this.logger?.LogDebug($"VaultConfigurationProvider: Data for key `{secretData.Key}` {keyMsg}");
                 }
 
                 if (shouldSetValue)
                 {
                     this.SetData(data, this.ConfigurationSource.Options.OmitVaultKeyName ? string.Empty : key);
                     hasChanges = true;
-                    this._versionsCache[key] = secretData.SecretData.Metadata.Version;
+                    this.versionsCache[key] = secretData.SecretData.Metadata.Version;
                 }
             }
 
@@ -135,80 +133,59 @@ namespace VaultSharp.Extensions.Configuration
                 var nestedKey = string.IsNullOrEmpty(key) ? pair.Key : $"{key}:{pair.Key}";
                 nestedKey = this.ReplaceTheAdditionalCharactersForConfigurationPath(nestedKey);
 
-                var nestedValue = pair.Value;
-                switch (nestedValue)
-                {
-                    case string sValue:
-                        this.Set(nestedKey, sValue);
-                        break;
-                    case int intValue:
-                        this.Set(nestedKey, intValue.ToString(CultureInfo.InvariantCulture));
-                        break;
-                    case long longValue:
-                        this.Set(nestedKey, longValue.ToString(CultureInfo.InvariantCulture));
-                        break;
-                    case bool boolValue:
-                        this.Set(nestedKey, boolValue.ToString(CultureInfo.InvariantCulture));
-                        break;
-                    case JToken token:
-                        switch (token.Type)
+                var nestedValue = (JsonElement)(object)pair.Value!;
+                this.SetItemData(nestedKey, nestedValue);
+            }
+        }
+
+        private void SetItemData(string nestedKey, JsonElement nestedValue)
+        {
+            switch ((nestedValue).ValueKind)
+            {
+                case JsonValueKind.Object:
+                    var jObject = nestedValue.EnumerateObject().ToDictionary(x => x.Name, x => x.Value).ToList();
+                    if (jObject != null)
+                    {
+                        this.SetData(jObject, nestedKey);
+                    }
+                    break;
+                case JsonValueKind.Array:
+                    var array = nestedValue.EnumerateArray();
+                    for(var i = 0; i < array.Count(); i++)
+                    {
+                        var arrElement = array.ElementAt(i);
+
+                        if (arrElement.ValueKind == JsonValueKind.Array)
                         {
-                            case JTokenType.Object:
-                            {
-                                var jObject = token.Value<JObject>();
-                                if (jObject != null)
-                                {
-                                    this.SetData<JToken?>(jObject, nestedKey);
-                                }
-
-                                break;
-                            }
-
-                            case JTokenType.None:
-                            case JTokenType.Array:
-                            {
-                                var array = (JArray)token;
-                                for (var i = 0; i < array.Count; i++)
-                                {
-                                    var arrElement = array[i];
-
-                                    if (array[i].Type == JTokenType.Array)
-                                    {
-                                        this.SetData(new[] { new KeyValuePair<string, JToken?>($"{nestedKey}:{i}", arrElement) }, null);
-                                    }
-                                    else if (array[i].Type == JTokenType.Object)
-                                    {
-                                        this.SetData(new[] { new KeyValuePair<string, JToken?>($"{nestedKey}:{i}", arrElement) }, null);
-
-                                        // this.SetData<JToken?>(arrElement, $"{nestedKey}:{i}");
-                                    }
-                                    else
-                                    {
-                                        this.Set($"{nestedKey}:{i}", array[i].Value<string>());
-                                    }
-                                }
-
-                                break;
-                            }
-
-                            case JTokenType.Property:
-                            case JTokenType.Integer:
-                            case JTokenType.Float:
-                            case JTokenType.Boolean:
-                            case JTokenType.Undefined:
-                            case JTokenType.Date:
-                            case JTokenType.Raw:
-                            case JTokenType.Bytes:
-                            case JTokenType.Guid:
-                            case JTokenType.Uri:
-                            case JTokenType.TimeSpan:
-                            case JTokenType.String:
-                                this.Set(nestedKey, token.Value<string>());
-                                break;
+                            this.SetData(new[] { new KeyValuePair<string, JsonElement?>($"{nestedKey}:{i}", arrElement) }, null);
                         }
-
-                        break;
-                }
+                        else if (arrElement.ValueKind == JsonValueKind.Object)
+                        {
+                            this.SetData(new[] { new KeyValuePair<string, JsonElement?>($"{nestedKey}:{i}", arrElement) }, null);
+                        }
+                        else
+                        {
+                            this.SetItemData($"{nestedKey}:{i}", arrElement);
+                        }
+                    }
+                    break;
+                case JsonValueKind.String:
+                    this.Set(nestedKey, nestedValue.GetString());
+                    break;
+                case JsonValueKind.Number:
+                    this.Set(nestedKey, nestedValue.GetDecimal().ToString(CultureInfo.InvariantCulture));
+                    break;
+                case JsonValueKind.True:
+                    this.Set(nestedKey, true.ToString());
+                    break;
+                case JsonValueKind.False:
+                    this.Set(nestedKey, false.ToString());
+                    break;
+                case JsonValueKind.Null:
+                    this.Set(nestedKey, null);
+                    break;
+                default:
+                    break;
             }
         }
 
@@ -216,18 +193,22 @@ namespace VaultSharp.Extensions.Configuration
         {
             Secret<ListInfo>? keys = null;
             var folderPath = path;
-            if (folderPath.EndsWith("/", StringComparison.InvariantCulture) == false)
+
+            if (this.ConfigurationSource.Options.AlwaysAddTrailingSlashToBasePath && folderPath.EndsWith("/", StringComparison.InvariantCulture) == false)
             {
                 folderPath += "/";
             }
 
-            try
+            if (folderPath.EndsWith("/", StringComparison.InvariantCulture))
             {
-                keys = await vaultClient.V1.Secrets.KeyValue.V2.ReadSecretPathsAsync(folderPath, this._source.MountPoint).ConfigureAwait(false);
-            }
-            catch (VaultApiException ex) when (ex.HttpStatusCode == HttpStatusCode.NotFound)
-            {
-                // this is key, not a folder
+                try
+                {
+                    keys = await vaultClient.V1.Secrets.KeyValue.V2.ReadSecretPathsAsync(folderPath, this.ConfigurationSource.MountPoint).ConfigureAwait(false);
+                }
+                catch (VaultApiException ex) when (ex.HttpStatusCode == HttpStatusCode.NotFound)
+                {
+                    // this is key, not a folder
+                }
             }
 
             if (keys != null)
@@ -251,7 +232,7 @@ namespace VaultSharp.Extensions.Configuration
             KeyedSecretData? keyedSecretData = null;
             try
             {
-                var secretData = await vaultClient.V1.Secrets.KeyValue.V2.ReadSecretAsync(valuePath, null, this._source.MountPoint)
+                var secretData = await vaultClient.V1.Secrets.KeyValue.V2.ReadSecretAsync(valuePath, null, this.ConfigurationSource.MountPoint)
                     .ConfigureAwait(false);
                 keyedSecretData = new KeyedSecretData(valuePath, secretData.Data);
             }
@@ -268,14 +249,14 @@ namespace VaultSharp.Extensions.Configuration
 
         private string ReplaceTheAdditionalCharactersForConfigurationPath(string inputKey)
         {
-            if (!this._source.Options.AdditionalCharactersForConfigurationPath.Any())
+            if (!this.ConfigurationSource.Options.AdditionalCharactersForConfigurationPath.Any())
             {
                 return inputKey;
             }
 
             var outputKey = new StringBuilder(inputKey);
 
-            foreach (var c in this._source.Options.AdditionalCharactersForConfigurationPath)
+            foreach (var c in this.ConfigurationSource.Options.AdditionalCharactersForConfigurationPath)
             {
                 outputKey.Replace(c, ':');
             }
