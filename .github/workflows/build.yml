@@ -27,9 +27,9 @@ jobs:
       run: git fetch --tags
       shell: pwsh
     - name: 'Install .NET Core SDK'
-      uses: actions/setup-dotnet@v2
+      uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: '6.0.x'
+        dotnet-version: '7.0.x'
     - name: 'Fix permissions'
       run: chmod +x ./Tests/VaultSharp.Extensions.Configuration.Test/approle.sh && chmod +x ./Tests/VaultSharp.Extensions.Configuration.Test/approle_nolist.sh
       shell: bash
