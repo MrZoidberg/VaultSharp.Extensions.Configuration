@@ -3,19 +3,22 @@
   <PropertyGroup Label="Build">
     <LangVersion>default</LangVersion>
     <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
-    <NoWarn>SA1633;SA1028;SA1309;CA1303</NoWarn>
+    <NoWarn>SA1633;SA1028;SA1309;CA1303;CS1591</NoWarn>
     <PackageId>VaultSharp.Extensions.Configuration</PackageId>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <Nullable>enable</Nullable>
-    <TargetFrameworks>net6.0;netstandard2.1</TargetFrameworks>
+    <TargetFrameworks>net6.0;net7.0;netstandard2.1</TargetFrameworks>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    <Copyright>Copyright 2022 © Mikhail Merkulov. All rights Reserved</Copyright>
+    <Copyright>Copyright 2023 © Mikhail Merkulov. All rights Reserved</Copyright>
   </PropertyGroup>
 
   <PropertyGroup Label="Package">
     <Product>VaultSharp.Extensions.Configuration</Product>
-    <Description>Configuration extension that allows you to use Hashicorp Vault as a configuration backend.</Description>
+    <Description>
+      Configuration extension that allows you to use Hashicorp Vault as a configuration backend.
+      This library is built with .NET Standard 2.1, .NET 6  &amp; .NET 7
+    </Description>
     <PackageTags>Vault;Configuration;Data protection;Hashicorp</PackageTags>
   </PropertyGroup>
 
@@ -23,29 +26,57 @@
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="6.0.0">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" Version="17.2.32">
+    </PackageReference>    
+    <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" Version="17.5.22">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="GitVersion.MsBuild" Version="5.10.3">
+    <PackageReference Include="GitVersion.MsBuild" Version="5.12.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
   </ItemGroup>
 
-  <ItemGroup>
+  <ItemGroup>    
+    <PackageReference Include="Microsoft.VisualStudio.Threading" Version="17.5.22" />    
+    <PackageReference Include="VaultSharp" Version="1.13.0.1" />
+    <PackageReference Include="MinVer" Version="4.3.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
+    <PackageReference Include="System.Text.Json" Version="7.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="7.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="7.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="7.0.1">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
+    <PackageReference Include="System.Text.Json" Version="7.0.2" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="6.0.1" />
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="6.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.3" />
-    <PackageReference Include="Microsoft.VisualStudio.Threading" Version="17.2.32" />
+    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="6.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net7.0'">
     <PackageReference Include="System.Text.Json" Version="7.0.2" />
-    <PackageReference Include="VaultSharp" Version="1.13.0.1" />
-    <PackageReference Include="MinVer" Version="4.1.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="7.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="7.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="7.0.1">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
 
   <PropertyGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
@@ -54,6 +85,10 @@
 
   <PropertyGroup Condition="'$(TargetFramework)'=='net6.0'">
     <AssemblyTitle>VaultSharp configuration extensions .NET 6</AssemblyTitle>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)'=='net7.0'">
+    <AssemblyTitle>VaultSharp configuration extensions .NET 7</AssemblyTitle>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net6.0|AnyCPU'">
