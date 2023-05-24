@@ -22,6 +22,7 @@ namespace VaultSharp.Extensions.Configuration
         /// <param name="additionalCharactersForConfigurationPath">Additional characters for the Configuration path.</param>
         /// <param name="namespace">Vault namespace.</param>
         /// <param name="alwaysAddTrailingSlashToBasePath">Should a trailing slash be added to the base path. See AlwaysAddTrailingSlashToBasePath property for details </param>
+        /// <param name="insecure">(Dangerous!) Ignore certificate validation. This implies self-signed certificates are accepted.</param>
         public VaultOptions(
             string vaultAddress,
             string? vaultToken,
@@ -32,7 +33,8 @@ namespace VaultSharp.Extensions.Configuration
             bool omitVaultKeyName = false,
             IEnumerable<char>? additionalCharactersForConfigurationPath = null,
             string? @namespace = null,
-            bool alwaysAddTrailingSlashToBasePath = true)
+            bool alwaysAddTrailingSlashToBasePath = true,
+            bool insecure = false)
         {
             this.VaultAddress = vaultAddress;
             this.VaultToken = vaultToken;
@@ -44,6 +46,7 @@ namespace VaultSharp.Extensions.Configuration
             this.AdditionalCharactersForConfigurationPath = additionalCharactersForConfigurationPath ?? Array.Empty<char>();
             this.Namespace = @namespace;
             this.AlwaysAddTrailingSlashToBasePath = alwaysAddTrailingSlashToBasePath;
+            this.Insecure = insecure;
         }
 
         /// <summary>
@@ -57,6 +60,7 @@ namespace VaultSharp.Extensions.Configuration
         /// <param name="additionalCharactersForConfigurationPath">Additional characters for the Configuration path.</param>
         /// <param name="namespace">Vault namespace.</param>
         /// <param name="alwaysAddTrailingSlashToBasePath">Should a trailing slash be added to the base path. See AlwaysAddTrailingSlashToBasePath property for details </param>
+        /// <param name="insecure">(Dangerous!) Ignore certificate validation. This implies self-signed certificates are accepted.</param>
         public VaultOptions(
             string vaultAddress,
             IAuthMethodInfo authMethod,
@@ -65,7 +69,8 @@ namespace VaultSharp.Extensions.Configuration
             bool omitVaultKeyName = false,
             IEnumerable<char>? additionalCharactersForConfigurationPath = null,
             string? @namespace = null,
-            bool alwaysAddTrailingSlashToBasePath = true)
+            bool alwaysAddTrailingSlashToBasePath = true,
+            bool insecure = false)
         {
             this.VaultAddress = vaultAddress;
             this.AuthMethod = authMethod;
@@ -75,6 +80,7 @@ namespace VaultSharp.Extensions.Configuration
             this.AdditionalCharactersForConfigurationPath = additionalCharactersForConfigurationPath ?? Array.Empty<char>();
             this.Namespace = @namespace;
             this.AlwaysAddTrailingSlashToBasePath = alwaysAddTrailingSlashToBasePath;
+            this.Insecure = insecure;
         }
 
         /// <summary>
@@ -116,7 +122,7 @@ namespace VaultSharp.Extensions.Configuration
         /// <summary>
         /// Gets a value indicating whether the Vault key should be ommited when generation Configuration key names.
         /// </summary>
-        public bool OmitVaultKeyName { get;  }
+        public bool OmitVaultKeyName { get; }
 
         /// <summary>
         /// Gets an array of characters that will be used as a path to form the Configuration.
@@ -134,5 +140,14 @@ namespace VaultSharp.Extensions.Configuration
         /// It is true by default. Set to false if you don't have permissions to list keys in the base path.
         /// </summary>
         public bool AlwaysAddTrailingSlashToBasePath { get; }
+
+        /// <summary>
+        /// Indicates whether we should disregard the certificate validation (for examples, servers behind Internet aren't likely to have a strong certs but we can't afford to use HTTP either)
+        /// Previously, the certificate behavior can be set globally, but subsequently removed in .NET Core and onwards due to security reasons.
+        /// We need to set the behavior to each HttpClient on a case-by-case basis. As such, this option is provided as a resolution. 
+        /// If it is true, a custom PostProcessHttpClientHandlerAction will be injected to the VaultClientSettings to accept any server certificate. 
+        /// Default value: false. Hashicorp also recommend using a proper CA to setup Vault access due to security concerns.
+        /// </summary>
+        public bool Insecure { get; }
     }
 }

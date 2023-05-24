@@ -24,5 +24,10 @@ namespace VaultSharp.Extensions.Configuration
         ///  Environment variable name for Vault secret.
         /// </summary>
         public const string Secret = "VAULT_SECRET";
+
+        /// <summary>
+        ///  Environment variable name for disabling server certificate validation for Vault client.
+        /// </summary>
+        public const string Insecure = "VAULT_INSECURE";
     }
 }

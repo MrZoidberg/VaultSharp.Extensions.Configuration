@@ -1,4 +1,4 @@
-﻿namespace VaultSharp.Extensions.Configuration
+namespace VaultSharp.Extensions.Configuration
 {
 #pragma warning disable CA2000
 
@@ -63,12 +63,15 @@
                 throw new ArgumentNullException(nameof(basePath));
             }
 
+            var insecureOk = bool.TryParse(Environment.GetEnvironmentVariable(VaultEnvironmentVariableNames.Insecure), out var insecure);
+
             var vaultOptions = new VaultOptions(
                 Environment.GetEnvironmentVariable(VaultEnvironmentVariableNames.Address) ??
                 VaultConfigurationSource.DefaultVaultUrl,
                 Environment.GetEnvironmentVariable(VaultEnvironmentVariableNames.Token) ?? VaultConfigurationSource.DefaultVaultToken,
                 Environment.GetEnvironmentVariable(VaultEnvironmentVariableNames.Secret),
-                Environment.GetEnvironmentVariable(VaultEnvironmentVariableNames.RoleId));
+                Environment.GetEnvironmentVariable(VaultEnvironmentVariableNames.RoleId),
+                insecureOk && insecure);
             configuration.Add(new VaultConfigurationSource(vaultOptions, basePath, mountPoint, logger));
             return configuration;
         }
