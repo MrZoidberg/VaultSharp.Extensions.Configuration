@@ -103,7 +103,8 @@ namespace VaultSharp.Extensions.Configuration
                 this.logger?.LogDebug($"VaultConfigurationProvider: got Vault data with key `{secretData.Key}`");
 
                 var key = secretData.Key;
-                key = key.TrimStart('/')[this.ConfigurationSource.BasePath.TrimStart('/').Length..].TrimStart('/').Replace('/', ':');
+                var len = this.ConfigurationSource.BasePath.TrimStart('/').Length;
+                key = key.TrimStart('/').Substring(len).TrimStart('/').Replace('/', ':');
                 key = this.ReplaceTheAdditionalCharactersForConfigurationPath(key);
                 var data = secretData.SecretData.Data;
 
