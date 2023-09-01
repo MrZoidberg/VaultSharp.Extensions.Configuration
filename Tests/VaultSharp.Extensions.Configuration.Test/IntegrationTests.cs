@@ -40,7 +40,7 @@ namespace VaultSharp.Extensions.Configuration.Test
         private IContainer PrepareVaultContainer(bool enableSSL = false, string? script = null)
         {
             var builder = new ContainerBuilder()
-                .WithImage("vault")
+                .WithImage("vault:1.13.3")
                 .WithName("vaultsharptest_"+Guid.NewGuid().ToString().Substring(0,8))
                 .WithPortBinding(8200, 8200)
                 .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(8200))

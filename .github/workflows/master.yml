@@ -1,7 +1,9 @@
-name: Build
+name: Build Status
 
 on:
-  pull_request:
+  push:
+    branches:
+      - master
 
 env:
   # Set the DOTNET_SKIP_FIRST_TIME_EXPERIENCE environment variable to stop wasting time caching packages
@@ -21,9 +23,6 @@ jobs:
       with:
         lfs: true
         fetch-depth: 0
-    - name: 'Git Fetch Tags'
-      run: git fetch --tags
-      shell: pwsh
     - name: 'Install .NET Core SDK'
       uses: actions/setup-dotnet@v3
       with:
@@ -41,36 +40,21 @@ jobs:
       run: dotnet cake --target=Test
       shell: pwsh    
     - name: Copy Coverage To Predictable Location
-      if: github.event_name == 'pull_request'
       run: cp coverage/*/coverage.cobertura.xml coverage/coverage.cobertura.xml
-    - name: 'Publish Code Coverage'
-      uses: actions/upload-artifact@v2
+    - name: 'Extract summary from Code Coverage Summary Report'
+      shell: bash
+      run: |
+        COVERAGE=$(cat coverage/coverage.cobertura.xml | grep -oP '(?<=line-rate=")[^"]*' -m 1)
+        COVERAGE=$(printf "%.0f\n" $(bc -l <<< "$COVERAGE*100"))
+        echo "COVERAGE=$COVERAGE%" >> $GITHUB_ENV
+        echo "BRANCH=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_ENV
+    - name: Create the Badgegg
+      uses: schneegans/dynamic-badges-action@v1.6.0
       with:
-        name: Coverage Cobertura Report
-        path: './coverage/coverage.cobertura.xml'
-    - name: 'Publish Test Results'
-      uses: actions/upload-artifact@v2
-      with:
-        name: Tests HTML Report
-        path: './coverage/VaultSharp.Extensions.Configuration.Test.html'
-    - name: Code Coverage Summary Report
-      if: github.event_name == 'pull_request'
-      uses: irongut/CodeCoverageSummary@v1.3.0
-      with:
-        filename: './coverage/coverage.cobertura.xml'
-        badge: true
-        fail_below_min: false
-        format: markdown
-        hide_branch_rate: false
-        hide_complexity: true
-        indicators: true
-        output: both
-    - name: Add Coverage PR Comment
-      uses: marocchino/sticky-pull-request-comment@v2
-      if: github.event_name == 'pull_request'
-      with:
-        recreate: true
-        path: code-coverage-results.md
-    - name: 'Dotnet Cake Pack'
-      run: dotnet cake --target=Pack
-      shell: pwsh
+        auth: ${{ secrets.GIST_SECRET }}
+        gistID: 5242a4e2d58a428062b3a59824d5864e
+        filename: VaultSharp.Extensions.Configuration__${{ env.BRANCH }}.json
+        label: Coverage
+        message: ${{ env.COVERAGE }}
+        color: "#3fbe25"
+        namedLogo: dotnet
