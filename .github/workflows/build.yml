@@ -2,8 +2,6 @@ name: Build
 
 on:
   pull_request:
-  push:
-    branches:
 
 env:
   # Set the DOTNET_SKIP_FIRST_TIME_EXPERIENCE environment variable to stop wasting time caching packages
@@ -55,24 +53,24 @@ jobs:
       with:
         name: tests
         path: './coverage/VaultSharp.Extensions.Configuration.Test.html'
-    # - name: Code Coverage Summary Report
-    #   if: github.event_name == 'pull_request'
-    #   uses: irongut/CodeCoverageSummary@v1.2.0
-    #   with:
-    #     filename: coverage/coverage.opencover.xml
-    #     badge: true
-    #     fail_below_min: true
-    #     format: markdown
-    #     hide_branch_rate: false
-    #     hide_complexity: true
-    #     indicators: true
-    #     output: both
-    # - name: Add Coverage PR Comment
-    #   uses: marocchino/sticky-pull-request-comment@v2
-    #   if: github.event_name == 'pull_request'
-    #   with:
-    #     recreate: true
-    #     path: code-coverage-results.md
+    - name: Code Coverage Summary Report
+      if: github.event_name == 'pull_request'
+      uses: irongut/CodeCoverageSummary@v1.2.0
+      with:
+        filename: coverage/coverage.opencover.xml
+        badge: true
+        fail_below_min: false
+        format: markdown
+        hide_branch_rate: false
+        hide_complexity: true
+        indicators: true
+        output: both
+    - name: Add Coverage PR Comment
+      uses: marocchino/sticky-pull-request-comment@v2
+      if: github.event_name == 'pull_request'
+      with:
+        recreate: true
+        path: code-coverage-results.md
     - name: 'Dotnet Cake Pack'
       run: dotnet cake --target=Pack
       shell: pwsh
