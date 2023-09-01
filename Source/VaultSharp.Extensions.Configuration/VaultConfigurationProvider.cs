@@ -82,8 +82,13 @@ namespace VaultSharp.Extensions.Configuration
                             {
                                 if (this.ConfigurationSource.Options.AcceptInsecureConnection)
                                 {
+#if NETSTANDARD2_0                                    
+                                    clientHandler.ServerCertificateCustomValidationCallback = (message, cert, chain, sslPolicyErrors) => true;
+#else
                                     clientHandler.ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
-                                } else if (this.ConfigurationSource.Options.ServerCertificateCustomValidationCallback != null)
+#endif
+                                }
+                                else if (this.ConfigurationSource.Options.ServerCertificateCustomValidationCallback != null)
                                 {
                                     clientHandler.ServerCertificateCustomValidationCallback = this.ConfigurationSource.Options.ServerCertificateCustomValidationCallback;
                                 }
