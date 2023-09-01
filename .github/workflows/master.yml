@@ -44,7 +44,7 @@ jobs:
       shell: bash
       run: |
         COVERAGE=$(cat coverage/coverage.cobertura.xml | grep -oP '(?<=line-rate=")[^"]*' -m 1)
-        COVERAGE=$(printf "%.0f\n" "$COVERAGE*100" | bc -l)
+        COVERAGE=$(printf "%.0f\n" $(bc -l <<< "$COVERAGE*100"))
         echo "COVERAGE=$COVERAGE%" >> $GITHUB_ENV
     - name: Create the Badgegg
       uses: schneegans/dynamic-badges-action@v1.6.0
