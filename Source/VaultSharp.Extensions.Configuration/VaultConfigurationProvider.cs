@@ -80,10 +80,12 @@ namespace VaultSharp.Extensions.Configuration
                         {
                             if (handler is HttpClientHandler clientHandler)
                             {
-                                if (this.ConfigurationSource.Options.Insecure)
+                                if (this.ConfigurationSource.Options.AcceptInsecureConnection)
                                 {
-                                    clientHandler.ServerCertificateCustomValidationCallback =
-                                        HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
+                                    clientHandler.ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
+                                } else if (this.ConfigurationSource.Options.ServerCertificateCustomValidationCallback != null)
+                                {
+                                    clientHandler.ServerCertificateCustomValidationCallback = this.ConfigurationSource.Options.ServerCertificateCustomValidationCallback;
                                 }
                             }
                         }

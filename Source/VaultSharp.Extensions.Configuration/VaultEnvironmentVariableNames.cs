@@ -28,6 +28,6 @@ namespace VaultSharp.Extensions.Configuration
         /// <summary>
         ///  Environment variable name for disabling server certificate validation for Vault client.
         /// </summary>
-        public const string Insecure = "VAULT_INSECURE";
+        public const string InsecureConnection = "VAULT_INSECURE";
     }
 }

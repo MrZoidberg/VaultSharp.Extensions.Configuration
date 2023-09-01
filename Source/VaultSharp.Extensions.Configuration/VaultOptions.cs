@@ -2,6 +2,9 @@ namespace VaultSharp.Extensions.Configuration
 {
     using System;
     using System.Collections.Generic;
+    using System.Net.Http;
+    using System.Net.Security;
+    using System.Security.Cryptography.X509Certificates;
     using VaultSharp.V1.AuthMethods;
 
     /// <summary>
@@ -22,7 +25,8 @@ namespace VaultSharp.Extensions.Configuration
         /// <param name="additionalCharactersForConfigurationPath">Additional characters for the Configuration path.</param>
         /// <param name="namespace">Vault namespace.</param>
         /// <param name="alwaysAddTrailingSlashToBasePath">Should a trailing slash be added to the base path. See AlwaysAddTrailingSlashToBasePath property for details </param>
-        /// <param name="insecure">(Dangerous!) Ignore certificate validation. This implies self-signed certificates are accepted.</param>
+        /// <param name="insecureConnection">(Dangerous!) Ignore certificate validation. This implies self-signed certificates are accepted.</param>
+        /// <param name="serverCertificateCustomValidationCallback">An optional action to post-process the HttpClientHandler. Used to manually validate the server certificate. Ignored if AcceptInsecureConnection is true.</param>
         public VaultOptions(
             string vaultAddress,
             string? vaultToken,
@@ -34,7 +38,8 @@ namespace VaultSharp.Extensions.Configuration
             IEnumerable<char>? additionalCharactersForConfigurationPath = null,
             string? @namespace = null,
             bool alwaysAddTrailingSlashToBasePath = true,
-            bool insecure = false)
+            bool insecureConnection = false,
+            Func<HttpRequestMessage, X509Certificate2?, X509Chain?, SslPolicyErrors, bool>? serverCertificateCustomValidationCallback = null)
         {
             this.VaultAddress = vaultAddress;
             this.VaultToken = vaultToken;
@@ -46,7 +51,8 @@ namespace VaultSharp.Extensions.Configuration
             this.AdditionalCharactersForConfigurationPath = additionalCharactersForConfigurationPath ?? Array.Empty<char>();
             this.Namespace = @namespace;
             this.AlwaysAddTrailingSlashToBasePath = alwaysAddTrailingSlashToBasePath;
-            this.Insecure = insecure;
+            this.AcceptInsecureConnection = insecureConnection;
+            this.ServerCertificateCustomValidationCallback = serverCertificateCustomValidationCallback;
         }
 
         /// <summary>
@@ -60,7 +66,8 @@ namespace VaultSharp.Extensions.Configuration
         /// <param name="additionalCharactersForConfigurationPath">Additional characters for the Configuration path.</param>
         /// <param name="namespace">Vault namespace.</param>
         /// <param name="alwaysAddTrailingSlashToBasePath">Should a trailing slash be added to the base path. See AlwaysAddTrailingSlashToBasePath property for details </param>
-        /// <param name="insecure">(Dangerous!) Ignore certificate validation. This implies self-signed certificates are accepted.</param>
+        /// <param name="insecureConnection">(Dangerous!) Ignore certificate validation. This implies self-signed certificates are accepted.</param>
+        /// <param name="serverCertificateCustomValidationCallback">An optional action to post-process the HttpClientHandler. Used to manually validate the server certificate. Ignored if AcceptInsecureConnection is true.</param>
         public VaultOptions(
             string vaultAddress,
             IAuthMethodInfo authMethod,
@@ -70,7 +77,8 @@ namespace VaultSharp.Extensions.Configuration
             IEnumerable<char>? additionalCharactersForConfigurationPath = null,
             string? @namespace = null,
             bool alwaysAddTrailingSlashToBasePath = true,
-            bool insecure = false)
+            bool insecureConnection = false,
+            Func<HttpRequestMessage, X509Certificate2?, X509Chain?, SslPolicyErrors, bool>? serverCertificateCustomValidationCallback = null)
         {
             this.VaultAddress = vaultAddress;
             this.AuthMethod = authMethod;
@@ -80,7 +88,8 @@ namespace VaultSharp.Extensions.Configuration
             this.AdditionalCharactersForConfigurationPath = additionalCharactersForConfigurationPath ?? Array.Empty<char>();
             this.Namespace = @namespace;
             this.AlwaysAddTrailingSlashToBasePath = alwaysAddTrailingSlashToBasePath;
-            this.Insecure = insecure;
+            this.AcceptInsecureConnection = insecureConnection;
+            this.ServerCertificateCustomValidationCallback = serverCertificateCustomValidationCallback;
         }
 
         /// <summary>
@@ -148,6 +157,11 @@ namespace VaultSharp.Extensions.Configuration
         /// If it is true, a custom PostProcessHttpClientHandlerAction will be injected to the VaultClientSettings to accept any server certificate. 
         /// Default value: false. Hashicorp also recommend using a proper CA to setup Vault access due to security concerns.
         /// </summary>
-        public bool Insecure { get; }
+        public bool AcceptInsecureConnection { get; }
+
+        /// <summary>
+        /// An optional action to post-process the HttpClientHandler. Used to manually validate the server certificate. Ignored if AcceptInsecureConnection is true.
+        /// </summary>
+        public Func<HttpRequestMessage, X509Certificate2?, X509Chain?, SslPolicyErrors, bool>? ServerCertificateCustomValidationCallback { get; set;}
     }
 }

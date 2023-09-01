@@ -63,7 +63,7 @@ namespace VaultSharp.Extensions.Configuration
                 throw new ArgumentNullException(nameof(basePath));
             }
 
-            var insecureOk = bool.TryParse(Environment.GetEnvironmentVariable(VaultEnvironmentVariableNames.Insecure), out var insecure);
+            var insecureOk = bool.TryParse(Environment.GetEnvironmentVariable(VaultEnvironmentVariableNames.InsecureConnection), out var insecure);
 
             var vaultOptions = new VaultOptions(
                 Environment.GetEnvironmentVariable(VaultEnvironmentVariableNames.Address) ??

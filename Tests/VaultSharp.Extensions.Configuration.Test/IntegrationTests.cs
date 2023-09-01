@@ -4,6 +4,7 @@ namespace VaultSharp.Extensions.Configuration.Test
     using System.Collections.Generic;
     using System.IO;
     using System.Net;
+    using System.Net.Http;
     using System.Text.Json;
     using System.Threading;
     using System.Threading.Tasks;
@@ -23,7 +24,7 @@ namespace VaultSharp.Extensions.Configuration.Test
     using ILogger = Microsoft.Extensions.Logging.ILogger;
 
     [CollectionDefinition("VaultSharp.Extensions.Configuration.Tests", DisableParallelization = true)]
-    public class IntegrationTests
+    public partial class IntegrationTests
     {
         private ILogger _logger;
 
@@ -36,16 +37,23 @@ namespace VaultSharp.Extensions.Configuration.Test
             this._logger = new SerilogLoggerProvider(Log.Logger).CreateLogger(nameof(IntegrationTests));
         }
 
-        private IContainer PrepareVaultContainer(string? script = null)
+        private IContainer PrepareVaultContainer(bool enableSSL = false, string? script = null)
         {
             var builder = new ContainerBuilder()
                 .WithImage("vault")
-                .WithName("vaultsharp_test")
+                .WithName("vaultsharptest_"+Guid.NewGuid().ToString().Substring(0,8))
                 .WithPortBinding(8200, 8200)
                 .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(8200))
                 .WithEnvironment("VAULT_UI", "true")
                 .WithEnvironment("VAULT_DEV_ROOT_TOKEN_ID", "root")
                 .WithEnvironment("VAULT_DEV_LISTEN_ADDRESS", "0.0.0.0:8200");
+
+            if (enableSSL)
+            {
+                // docker run -p 8200:8200 -v "${PWD}/certs:/tmp/certs" vault server -dev-tls=true -dev-tls-cert-dir=tmp/certs
+                builder = builder.WithCommand(new[] { "server", "-dev-tls=true", "-dev-tls-cert-dir=/tmp/certs" });
+                builder = builder.WithBindMount(Path.Combine(Environment.CurrentDirectory, "certs"), "/tmp/certs");
+            }
 
             if (!string.IsNullOrEmpty(script))
             {
@@ -57,11 +65,21 @@ namespace VaultSharp.Extensions.Configuration.Test
             return builder.Build();
         }
 
-        private async Task LoadDataAsync(Dictionary<string, IEnumerable<KeyValuePair<string, object>>> values)
+        private async Task LoadDataAsync(string server, Dictionary<string, IEnumerable<KeyValuePair<string, object>>> values)
         {
             var authMethod = new TokenAuthMethodInfo("root");
 
-            var vaultClientSettings = new VaultClientSettings("http://localhost:8200", authMethod) { SecretsEngineMountPoints = { KeyValueV2 = "secret" } };
+            var vaultClientSettings = new VaultClientSettings(server, authMethod)
+            {
+                SecretsEngineMountPoints = { KeyValueV2 = "secret" },
+                PostProcessHttpClientHandlerAction = handler =>
+                {
+                    if (handler is HttpClientHandler clientHandler)
+                    {
+                        clientHandler.ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
+                    }
+                }
+            };
             IVaultClient vaultClient = new VaultClient(vaultClientSettings);
 
             foreach (var sectionPair in values)
@@ -137,7 +155,7 @@ namespace VaultSharp.Extensions.Configuration.Test
             try
             {
                 await container.StartAsync().ConfigureAwait(false);
-                await this.LoadDataAsync(values).ConfigureAwait(false);
+                await this.LoadDataAsync("http://localhost:8200", values).ConfigureAwait(false);
 
                 // act
                 ConfigurationBuilder builder = new ConfigurationBuilder();
@@ -197,7 +215,7 @@ namespace VaultSharp.Extensions.Configuration.Test
             try
             {
                 await container.StartAsync().ConfigureAwait(false);
-                await this.LoadDataAsync(values).ConfigureAwait(false);
+                await this.LoadDataAsync("http://localhost:8200", values).ConfigureAwait(false);
 
                 // act
                 ConfigurationBuilder builder = new ConfigurationBuilder();
@@ -235,7 +253,7 @@ namespace VaultSharp.Extensions.Configuration.Test
             try
             {
                 await container.StartAsync().ConfigureAwait(false);
-                await this.LoadDataAsync(values).ConfigureAwait(false);
+                await this.LoadDataAsync("http://localhost:8200", values).ConfigureAwait(false);
 
 
                 // act
@@ -263,7 +281,7 @@ namespace VaultSharp.Extensions.Configuration.Test
                     { "test/subsection3", new[] { new KeyValuePair<string, object>("option3", "value3_new") } },
                     { "test/testsection", new[] { new KeyValuePair<string, object>("option4", "value4_new") } },
                 };
-                await this.LoadDataAsync(values).ConfigureAwait(false);
+                await this.LoadDataAsync("http://localhost:8200", values).ConfigureAwait(false);
                 await Task.Delay(TimeSpan.FromSeconds(15), cts.Token).ConfigureAwait(true);
 
                 reloadToken.HasChanged.Should().BeTrue();
@@ -298,7 +316,7 @@ namespace VaultSharp.Extensions.Configuration.Test
             try
             {
                 await container.StartAsync().ConfigureAwait(false);
-                await this.LoadDataAsync(values).ConfigureAwait(false);
+                await this.LoadDataAsync("http://localhost:8200", values).ConfigureAwait(false);
 
 
                 // act
@@ -356,7 +374,7 @@ namespace VaultSharp.Extensions.Configuration.Test
             try
             {
                 await container.StartAsync(cts.Token).ConfigureAwait(false);
-                await this.LoadDataAsync(values).ConfigureAwait(false);
+                await this.LoadDataAsync("http://localhost:8200", values).ConfigureAwait(false);
 
 
                 // act
@@ -390,7 +408,7 @@ namespace VaultSharp.Extensions.Configuration.Test
                         },
                  };
 
-                await this.LoadDataAsync(values).ConfigureAwait(false);
+                await this.LoadDataAsync("http://localhost:8200", values).ConfigureAwait(false);
                 await Task.Delay(TimeSpan.FromSeconds(15), cts.Token).ConfigureAwait(true);
 
                 reloadToken.HasChanged.Should().BeTrue();
@@ -428,7 +446,7 @@ namespace VaultSharp.Extensions.Configuration.Test
             try
             {
                 await container.StartAsync(cts.Token).ConfigureAwait(false);
-                await this.LoadDataAsync(values).ConfigureAwait(false);
+                await this.LoadDataAsync("http://localhost:8200", values).ConfigureAwait(false);
 
                 // act
                 ConfigurationBuilder builder = new ConfigurationBuilder();
@@ -467,7 +485,7 @@ namespace VaultSharp.Extensions.Configuration.Test
                     },
              };
 
-            var container = this.PrepareVaultContainer("approle.sh");
+            var container = this.PrepareVaultContainer(script: "approle.sh");
             try
             {
                 await container.StartAsync(cts.Token).ConfigureAwait(false);
@@ -478,7 +496,7 @@ namespace VaultSharp.Extensions.Configuration.Test
                     throw new Exception(msg);
                 }
                 var (RoleId, SecretId) = await this.GetAppRoleCreds("test-role");
-                await this.LoadDataAsync(values).ConfigureAwait(false);
+                await this.LoadDataAsync("http://localhost:8200", values).ConfigureAwait(false);
 
                 // act
                 ConfigurationBuilder builder = new ConfigurationBuilder();
@@ -517,7 +535,7 @@ namespace VaultSharp.Extensions.Configuration.Test
                     },
              };
 
-            var container = this.PrepareVaultContainer("approle_nolist.sh");
+            var container = this.PrepareVaultContainer(script: "approle_nolist.sh");
             try
             {
                 await container.StartAsync(cts.Token).ConfigureAwait(false);
@@ -526,9 +544,9 @@ namespace VaultSharp.Extensions.Configuration.Test
                 {
                     string msg = execResult.Stdout + Environment.NewLine + execResult.Stderr;
                     throw new Exception(msg);
-                }                
+                }
                 var (RoleId, SecretId) = await this.GetAppRoleCreds("test-role");
-                await this.LoadDataAsync(values).ConfigureAwait(false);
+                await this.LoadDataAsync("http://localhost:8200", values).ConfigureAwait(false);
 
                 // act
                 ConfigurationBuilder builder = new ConfigurationBuilder();
@@ -572,7 +590,7 @@ namespace VaultSharp.Extensions.Configuration.Test
             try
             {
                 await container.StartAsync(cts.Token).ConfigureAwait(false);
-                await this.LoadDataAsync(values).ConfigureAwait(false);
+                await this.LoadDataAsync("http://localhost:8200", values).ConfigureAwait(false);
 
                 // act
                 var builder = new ConfigurationBuilder();
