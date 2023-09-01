@@ -1,6 +1,6 @@
 # VaultSharp.Extensions.Configuration
 
-[![GitHub Actions Status](https://github.com/MrZoidberg/VaultSharp.Extensions.Configuration/workflows/Build/badge.svg?branch=master)](https://github.com/MrZoidberg/VaultSharp.Extensions.Configuration/actions) ![Nuget](https://img.shields.io/nuget/v/VaultSharp.Extensions.Configuration)
+[![GitHub Actions Status](https://github.com/MrZoidberg/VaultSharp.Extensions.Configuration/workflows/Build/badge.svg?branch=master)](https://github.com/MrZoidberg/VaultSharp.Extensions.Configuration/actions) ![Nuget](https://img.shields.io/nuget/v/VaultSharp.Extensions.Configuration) ![badge](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/MrZoidberg/5242a4e2d58a428062b3a59824d5864e/raw/VaultSharp.Extensions.Configuration__master.json)
 
 VaultSharp.Extensions.Configuration is an extension to [VaultSharp](https://github.com/rajanadar/VaultSharp) that allows reading configuration options from Vault.
 

@@ -48,15 +48,11 @@ Task("Test")
             new DotNetTestSettings()
             {
                 Configuration = configuration,
-                //Logger = $"trx;LogFileName={project.GetFilenameWithoutExtension()}.trx",
+                Loggers = new[] { "trx" },
                 NoBuild = true,
                 NoRestore = true,
                 ResultsDirectory = "coverage",
-                ArgumentCustomization = x => x
-                    .AppendSwitch("--logger", $"html;LogFileName={project.GetFilenameWithoutExtension()}.html")
-                    .Append("--collect:\"XPlat Code Coverage\"")
-                    //.Append("--results-directory coverage")
-                    .Append("--settings runsettings.xml"),
+                Collectors = new[] { "XPlat Code Coverage;Format=cobertura" },
             });
     });
 
