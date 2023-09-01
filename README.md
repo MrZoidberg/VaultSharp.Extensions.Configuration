@@ -112,8 +112,9 @@ Alternatively, you can configure Vault connection using next environment variabl
 - `VAULT_TOKEN` : Vault token. Used for token-based authentication. Default value is `root`.
 - `VAULT_ROLEID` : Vault AppRole ID. Used for AppRole-based authentication.
 - `VAULT_SECRET` : Vault AppRole secret. Used for AppRole-based authentication.
+- `VAULT_INSECURE` : Allow insecure SSL connections to Vault. Default value is `false`.
 
-## Configuration using IAuthMethodInfo
+## Configuration using code
 
 You can configure Vault connection using any supported auth method (look at https://github.com/rajanadar/VaultSharp#auth-methods):
 
@@ -126,6 +127,29 @@ config.AddVaultConfiguration(
             reloadCheckIntervalSeconds: 60),
         "sampleapp",
         "secret");
+```
+
+You can enable insecure TLS connections to Vault:
+
+```csharp
+builder.AddVaultConfiguration(
+    () => new VaultOptions("https://localhost:8200", "root", insecureConnection: true),
+    "test",
+    "secret",
+    this._logger);
+```
+
+Or manually validate TLS certificate:
+
+```csharp
+builder.AddVaultConfiguration(
+    () => new VaultOptions("https://localhost:8200", "root", additionalCharactersForConfigurationPath: new[] { '.' }, insecureConnection: false, serverCertificateCustomValidationCallback: (message, cert, chain, errors) =>
+    {
+        return true; //add your validation logic here
+    }),
+    "test",
+    "secret",
+    this._logger);
 ```
 
 ## Preparing secrets in Vault
@@ -169,7 +193,7 @@ There are two ways to create nested parameters.
 
 ## Limitations
 
-- Currently, only token and AppRole based authentication is supported.
+- Currently, only token and AppRole based authentication is supported from configuration. Other types of authentication can be used by code.
 - TTL of the secrets is not controlled.
 
 ## Contributing
