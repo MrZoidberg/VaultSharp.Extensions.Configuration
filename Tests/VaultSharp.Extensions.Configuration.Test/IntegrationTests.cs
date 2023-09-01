@@ -51,8 +51,7 @@ namespace VaultSharp.Extensions.Configuration.Test
             if (enableSSL)
             {
                 // docker run -p 8200:8200 -v "${PWD}/certs:/tmp/certs" vault server -dev-tls=true -dev-tls-cert-dir=tmp/certs
-                builder = builder.WithCommand(new[] { "server", "-dev-tls=true", "-dev-tls-cert-dir=/tmp/certs" });
-                builder = builder.WithBindMount(Path.Combine(Environment.CurrentDirectory, "certs"), "/tmp/certs");
+                builder = builder.WithCommand(new[] { "server", "-dev-tls=true" });
             }
 
             if (!string.IsNullOrEmpty(script))
