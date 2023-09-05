@@ -5,6 +5,7 @@ namespace VaultSharp.Extensions.Configuration
     using System.Globalization;
     using System.Linq;
     using System.Net;
+    using System.Net.Http;
     using System.Text;
     using System.Text.Json;
     using System.Threading.Tasks;
@@ -74,6 +75,25 @@ namespace VaultSharp.Extensions.Configuration
                     {
                         UseVaultTokenHeaderInsteadOfAuthorizationHeader = true,
                         Namespace = this.ConfigurationSource.Options.Namespace,
+
+                        PostProcessHttpClientHandlerAction = handler =>
+                        {
+                            if (handler is HttpClientHandler clientHandler)
+                            {
+                                if (this.ConfigurationSource.Options.AcceptInsecureConnection)
+                                {
+#if NETSTANDARD2_0                                    
+                                    clientHandler.ServerCertificateCustomValidationCallback = (message, cert, chain, sslPolicyErrors) => true;
+#else
+                                    clientHandler.ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
+#endif
+                                }
+                                else if (this.ConfigurationSource.Options.ServerCertificateCustomValidationCallback != null)
+                                {
+                                    clientHandler.ServerCertificateCustomValidationCallback = this.ConfigurationSource.Options.ServerCertificateCustomValidationCallback;
+                                }
+                            }
+                        }
                     };
                     this.vaultClient = new VaultClient(vaultClientSettings);
                 }
