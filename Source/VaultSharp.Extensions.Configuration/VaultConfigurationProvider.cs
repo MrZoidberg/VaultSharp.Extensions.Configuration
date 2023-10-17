@@ -115,6 +115,13 @@ namespace VaultSharp.Extensions.Configuration
             }
         }
 
+        /// <summary>
+        /// This will fetch the vault token again before the new operation.
+        /// Use IConfiguration object: configurationRoot.Providers.OfType&lt;VaultConfigurationProvider&lt;().FirstOrDefault().ResetToken(); 
+        /// </summary>
+        /// <see cref="https://github.com/rajanadar/VaultSharp/blob/34ab400c2a295f4a81d97fc5d65f38509c7e0f05/README.md?plain=1#L92"/>
+        public void ResetToken() => this.vaultClient?.V1.Auth.ResetVaultToken();
+
         private async Task<bool> LoadVaultDataAsync(IVaultClient vaultClient)
         {
             var hasChanges = false;
