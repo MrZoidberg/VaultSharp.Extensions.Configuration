@@ -112,6 +112,7 @@ namespace VaultSharp.Extensions.Configuration
             catch (Exception e) when (e is VaultApiException || e is System.Net.Http.HttpRequestException)
             {
                 this.logger?.Log(LogLevel.Error, e, "Cannot load configuration from Vault");
+                throw;
             }
         }
 

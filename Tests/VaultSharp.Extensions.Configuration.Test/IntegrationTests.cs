@@ -5,7 +5,6 @@ namespace VaultSharp.Extensions.Configuration.Test
     using System.IO;
     using System.Net;
     using System.Net.Http;
-    using System.Text.Json;
     using System.Threading;
     using System.Threading.Tasks;
     using DotNet.Testcontainers.Builders;
@@ -14,7 +13,6 @@ namespace VaultSharp.Extensions.Configuration.Test
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.Logging;
     using Moq;
-    using Newtonsoft.Json.Linq;
     using Serilog;
     using Serilog.Extensions.Logging;
     using VaultSharp.Core;
@@ -598,22 +596,25 @@ namespace VaultSharp.Extensions.Configuration.Test
                     "myservice-config",
                     "secret",
                     loggerMock.Object);
-                var configurationRoot = builder.Build();
+                Action act = () => builder.Build();
+                act.Should().Throw<VaultApiException>().And.HttpStatusCode.Should().Be(HttpStatusCode.Forbidden);
 
-                // assert
-                loggerMock.Verify(
-                    x => x.Log(
-                        It.Is<LogLevel>(l => l == LogLevel.Error),
-                        It.IsAny<EventId>(),
-                        It.Is<It.IsAnyType>((v, t) => v.ToString() == "Cannot load configuration from Vault"),
-                        It.Is<VaultApiException>(exception => exception.HttpStatusCode == HttpStatusCode.Forbidden),
-                        It.Is<Func<It.IsAnyType, Exception?, string>>((v, t) => true)), Times.Once);
-            }
+            }           
             finally
             {
                 cts.Cancel();
                 await container.DisposeAsync().ConfigureAwait(false);
             }
+
+            // assert
+            loggerMock.Verify(
+                x => x.Log(
+                    It.Is<LogLevel>(l => l == LogLevel.Error),
+                    It.IsAny<EventId>(),
+                    It.Is<It.IsAnyType>((v, t) => v.ToString() == "Cannot load configuration from Vault"),
+                    It.Is<VaultApiException>(exception => exception.HttpStatusCode == HttpStatusCode.Forbidden),
+                    It.Is<Func<It.IsAnyType, Exception?, string>>((v, t) => true)), Times.Once);
+
         }
     }
 
