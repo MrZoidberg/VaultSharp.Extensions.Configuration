@@ -32,7 +32,7 @@ namespace VaultSharp.Extensions.Configuration
             }
 
             this._logger = logger;
-
+            
             this._configProviders = configurationRoot.Providers.OfType<VaultConfigurationProvider>().Where(p => p.ConfigurationSource.Options.ReloadOnChange).ToList() !;
         }
 
