@@ -82,10 +82,11 @@ public partial class IntegrationTests
                 "test",
                 "secret",
                 this._logger);
-            var configurationRoot = builder.Build();
+            Action act = () => builder.Build();
+
 
             // assert
-            configurationRoot.GetValue<string>("option1").Should().BeNull();
+            act.Should().Throw<System.Net.Http.HttpRequestException>("The SSL connection could not be established, see inner exception.");
         }
         finally
         {
