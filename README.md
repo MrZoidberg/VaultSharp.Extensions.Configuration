@@ -4,7 +4,7 @@
 
 VaultSharp.Extensions.Configuration is an extension to [VaultSharp](https://github.com/rajanadar/VaultSharp) that allows reading configuration options from Vault.
 
-VaultSharp.Extensions.Configuration is a .NET Standard 2.0, 2.1 and .NET 6.0 based cross-platform C# Library.
+VaultSharp.Extensions.Configuration is a .NET Standard 2.0, 2.1, .NET 6.0, .NET 7.0, and .NET 8.0 based cross-platform C# Library.
 
 ## Get Started
 
