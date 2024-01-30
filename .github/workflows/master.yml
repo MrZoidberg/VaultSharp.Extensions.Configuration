@@ -19,14 +19,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         lfs: true
         fetch-depth: 0
     - name: 'Install .NET Core SDK'
-      uses: actions/setup-dotnet@v3
+      uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '7.0.x'
+        dotnet-version: |
+          '6.0.x'
+          '7.0.x'
+          '8.0.x'
     - name: 'Fix permissions'
       run: chmod +x ./Tests/VaultSharp.Extensions.Configuration.Test/approle.sh && chmod +x ./Tests/VaultSharp.Extensions.Configuration.Test/approle_nolist.sh
       shell: bash
@@ -49,7 +52,7 @@ jobs:
         echo "COVERAGE=$COVERAGE%" >> $GITHUB_ENV
         echo "BRANCH=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_ENV
     - name: Create the Badgegg
-      uses: schneegans/dynamic-badges-action@v1.6.0
+      uses: schneegans/dynamic-badges-action@v1.7.0
       with:
         auth: ${{ secrets.GIST_SECRET }}
         gistID: 5242a4e2d58a428062b3a59824d5864e

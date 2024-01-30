@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         lfs: true
         fetch-depth: 0
@@ -25,9 +25,12 @@ jobs:
       run: git fetch --tags
       shell: pwsh
     - name: 'Install .NET Core SDK'
-      uses: actions/setup-dotnet@v3
+      uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '7.0.x'
+        dotnet-version: |
+          '6.0.x'
+          '7.0.x'
+          '8.0.x'
     - name: 'Fix permissions'
       run: chmod +x ./Tests/VaultSharp.Extensions.Configuration.Test/approle.sh && chmod +x ./Tests/VaultSharp.Extensions.Configuration.Test/approle_nolist.sh
       shell: bash
@@ -44,12 +47,12 @@ jobs:
       if: github.event_name == 'pull_request'
       run: cp coverage/*/coverage.cobertura.xml coverage/coverage.cobertura.xml
     - name: 'Publish Code Coverage'
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: Coverage Cobertura Report
         path: './coverage/coverage.cobertura.xml'
     - name: 'Publish Test Results'
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: Tests HTML Report
         path: './coverage/VaultSharp.Extensions.Configuration.Test.html'
