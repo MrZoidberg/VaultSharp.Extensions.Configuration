@@ -24,7 +24,7 @@ namespace VaultSharp.Extensions.Configuration.Test
     [CollectionDefinition("VaultSharp.Extensions.Configuration.Tests", DisableParallelization = true)]
     public partial class IntegrationTests
     {
-        private ILogger _logger;
+        private readonly ILogger logger;
 
         public IntegrationTests()
         {
@@ -32,7 +32,7 @@ namespace VaultSharp.Extensions.Configuration.Test
                 .MinimumLevel.Debug()
                 .WriteTo.Console()
                 .CreateLogger();
-            this._logger = new SerilogLoggerProvider(Log.Logger).CreateLogger(nameof(IntegrationTests));
+            this.logger = new SerilogLoggerProvider(Log.Logger).CreateLogger(nameof(IntegrationTests));
         }
 
         private IContainer PrepareVaultContainer(bool enableSSL = false, string? script = null)
@@ -155,12 +155,12 @@ namespace VaultSharp.Extensions.Configuration.Test
                 await this.LoadDataAsync("http://localhost:8200", values).ConfigureAwait(false);
 
                 // act
-                ConfigurationBuilder builder = new ConfigurationBuilder();
+                var builder = new ConfigurationBuilder();
                 builder.AddVaultConfiguration(
                     () => new VaultOptions("http://localhost:8200", "root", additionalCharactersForConfigurationPath: new[] { '.' }),
                     "test",
                     "secret",
-                    this._logger);
+                    this.logger);
                 var configurationRoot = builder.Build();
 
                 // assert
@@ -168,7 +168,7 @@ namespace VaultSharp.Extensions.Configuration.Test
                 configurationRoot.GetValue<int>("option3").Should().Be(5);
                 configurationRoot.GetValue<bool>("option4").Should().Be(true);
                 configurationRoot.GetValue<string>("option5:0").Should().Be("v1");
-                configurationRoot.GetValue<string>("option5:1").Should().Be("v2");
+                configurationRoot.GetValue<string>("option5:1").Should().Be("v2"); 
                 configurationRoot.GetValue<string>("option5:2").Should().Be("v3");
                 var t1 = new TestConfigObject();
                 configurationRoot.Bind("option6:0", t1);
@@ -215,12 +215,12 @@ namespace VaultSharp.Extensions.Configuration.Test
                 await this.LoadDataAsync("http://localhost:8200", values).ConfigureAwait(false);
 
                 // act
-                ConfigurationBuilder builder = new ConfigurationBuilder();
+                var builder = new ConfigurationBuilder();
                 builder.AddVaultConfiguration(
                     () => new VaultOptions("http://localhost:8200", "root", omitVaultKeyName: true),
                     "myservice-config",
                     "secret",
-                    this._logger);
+                    this.logger);
                 var configurationRoot = builder.Build();
 
                 // assert
@@ -237,7 +237,7 @@ namespace VaultSharp.Extensions.Configuration.Test
         public async Task Success_WatcherTest_TokenAuth()
         {
             // arrange
-            using CancellationTokenSource cts = new CancellationTokenSource();
+            using var cts = new CancellationTokenSource();
 
             var values =
                 new Dictionary<string, IEnumerable<KeyValuePair<string, object>>>
@@ -254,14 +254,14 @@ namespace VaultSharp.Extensions.Configuration.Test
 
 
                 // act
-                ConfigurationBuilder builder = new ConfigurationBuilder();
+                var builder = new ConfigurationBuilder();
                 builder.AddVaultConfiguration(
                     () => new VaultOptions("http://localhost:8200", "root", reloadOnChange: true, reloadCheckIntervalSeconds: 10),
                     "test",
                     "secret",
-                    this._logger);
+                    this.logger);
                 var configurationRoot = builder.Build();
-                VaultChangeWatcher changeWatcher = new VaultChangeWatcher(configurationRoot, this._logger);
+                var changeWatcher = new VaultChangeWatcher(configurationRoot, this.logger);
                 await changeWatcher.StartAsync(cts.Token).ConfigureAwait(false);
                 var reloadToken = configurationRoot.GetReloadToken();
 
@@ -291,7 +291,7 @@ namespace VaultSharp.Extensions.Configuration.Test
             }
             finally
             {
-                cts.Cancel();
+                await cts.CancelAsync();
                 await container.DisposeAsync().ConfigureAwait(false);
             }
         }
@@ -300,7 +300,7 @@ namespace VaultSharp.Extensions.Configuration.Test
         public async Task Success_WatcherTest_NoChanges()
         {
             // arrange
-            using CancellationTokenSource cts = new CancellationTokenSource();
+            using var cts = new CancellationTokenSource();
 
             var values =
                 new Dictionary<string, IEnumerable<KeyValuePair<string, object>>>
@@ -317,14 +317,14 @@ namespace VaultSharp.Extensions.Configuration.Test
 
 
                 // act
-                ConfigurationBuilder builder = new ConfigurationBuilder();
+                var builder = new ConfigurationBuilder();
                 builder.AddVaultConfiguration(
                     () => new VaultOptions("http://localhost:8200", "root", reloadOnChange: true, reloadCheckIntervalSeconds: 10),
                     "test",
                     "secret",
-                    this._logger);
+                    this.logger);
                 var configurationRoot = builder.Build();
-                VaultChangeWatcher changeWatcher = new VaultChangeWatcher(configurationRoot, this._logger);
+                var changeWatcher = new VaultChangeWatcher(configurationRoot, this.logger);
                 await changeWatcher.StartAsync(cts.Token).ConfigureAwait(false);
                 var reloadToken = configurationRoot.GetReloadToken();
 
@@ -345,7 +345,7 @@ namespace VaultSharp.Extensions.Configuration.Test
             }
             finally
             {
-                cts.Cancel();
+                await cts.CancelAsync();
                 await container.DisposeAsync().ConfigureAwait(false);
             }
         }
@@ -354,7 +354,7 @@ namespace VaultSharp.Extensions.Configuration.Test
         public async Task Success_WatcherTest_OmitVaultKey_TokenAuth()
         {
             // arrange
-            using CancellationTokenSource cts = new CancellationTokenSource();
+            using var cts = new CancellationTokenSource();
             var values =
              new Dictionary<string, IEnumerable<KeyValuePair<string, object>>>
              {
@@ -375,14 +375,14 @@ namespace VaultSharp.Extensions.Configuration.Test
 
 
                 // act
-                ConfigurationBuilder builder = new ConfigurationBuilder();
+                var builder = new ConfigurationBuilder();
                 builder.AddVaultConfiguration(
                     () => new VaultOptions("http://localhost:8200", "root", reloadOnChange: true, reloadCheckIntervalSeconds: 10, omitVaultKeyName: true),
                     "myservice-config",
                     "secret",
-                    this._logger);
+                    this.logger);
                 var configurationRoot = builder.Build();
-                VaultChangeWatcher changeWatcher = new VaultChangeWatcher(configurationRoot, this._logger);
+                var changeWatcher = new VaultChangeWatcher(configurationRoot, this.logger);
                 await changeWatcher.StartAsync(cts.Token).ConfigureAwait(false);
                 var reloadToken = configurationRoot.GetReloadToken();
 
@@ -417,7 +417,7 @@ namespace VaultSharp.Extensions.Configuration.Test
             }
             finally
             {
-                cts.Cancel();
+                await cts.CancelAsync();
                 await container.DisposeAsync().ConfigureAwait(false);
             }
         }
@@ -426,7 +426,7 @@ namespace VaultSharp.Extensions.Configuration.Test
         public async Task Success_TokenAuthMethod()
         {
             // arrange
-            using CancellationTokenSource cts = new CancellationTokenSource();
+            using var cts = new CancellationTokenSource();
             var values =
               new Dictionary<string, IEnumerable<KeyValuePair<string, object>>>
               {
@@ -446,12 +446,12 @@ namespace VaultSharp.Extensions.Configuration.Test
                 await this.LoadDataAsync("http://localhost:8200", values).ConfigureAwait(false);
 
                 // act
-                ConfigurationBuilder builder = new ConfigurationBuilder();
+                var builder = new ConfigurationBuilder();
                 builder.AddVaultConfiguration(
                     () => new VaultOptions("http://localhost:8200", new TokenAuthMethodInfo("root"), reloadOnChange: true, reloadCheckIntervalSeconds: 10, omitVaultKeyName: true),
                     "myservice-config",
                     "secret",
-                    this._logger);
+                    this.logger);
                 var configurationRoot = builder.Build();
 
                 // assert
@@ -460,7 +460,7 @@ namespace VaultSharp.Extensions.Configuration.Test
             }
             finally
             {
-                cts.Cancel();
+                await cts.CancelAsync();
                 await container.DisposeAsync().ConfigureAwait(false);
             }
         }
@@ -469,7 +469,7 @@ namespace VaultSharp.Extensions.Configuration.Test
         public async Task Success_AppRoleAuthMethod()
         {
             // arrange
-            using CancellationTokenSource cts = new CancellationTokenSource();
+            using var cts = new CancellationTokenSource();
             var values =
              new Dictionary<string, IEnumerable<KeyValuePair<string, object>>>
              {
@@ -489,19 +489,19 @@ namespace VaultSharp.Extensions.Configuration.Test
                 var execResult = await container.ExecAsync(new[] { "/tmp/script.sh" });
                 if (execResult.ExitCode != 0)
                 {
-                    string msg = execResult.Stdout + Environment.NewLine + execResult.Stderr;
+                    var msg = execResult.Stdout + Environment.NewLine + execResult.Stderr;
                     throw new Exception(msg);
                 }
                 var (RoleId, SecretId) = await this.GetAppRoleCreds("test-role");
                 await this.LoadDataAsync("http://localhost:8200", values).ConfigureAwait(false);
 
                 // act
-                ConfigurationBuilder builder = new ConfigurationBuilder();
+                var builder = new ConfigurationBuilder();
                 builder.AddVaultConfiguration(
                     () => new VaultOptions("http://localhost:8200", new AppRoleAuthMethodInfo(RoleId, SecretId), reloadOnChange: true, reloadCheckIntervalSeconds: 10, omitVaultKeyName: true),
                     "myservice-config",
                     "secret",
-                    this._logger);
+                    this.logger);
                 var configurationRoot = builder.Build();
 
                 // assert
@@ -510,7 +510,7 @@ namespace VaultSharp.Extensions.Configuration.Test
             }
             finally
             {
-                cts.Cancel();
+                await cts.CancelAsync();
                 await container.DisposeAsync().ConfigureAwait(false);
             }
         }
@@ -519,7 +519,7 @@ namespace VaultSharp.Extensions.Configuration.Test
         public async Task Success_AppRoleAuthMethodNoListPermissions()
         {
             // arrange
-            using CancellationTokenSource cts = new CancellationTokenSource();
+            using var cts = new CancellationTokenSource();
             var values =
              new Dictionary<string, IEnumerable<KeyValuePair<string, object>>>
              {
@@ -539,19 +539,19 @@ namespace VaultSharp.Extensions.Configuration.Test
                 var execResult = await container.ExecAsync(new[] { "/tmp/script.sh" });
                 if (execResult.ExitCode != 0)
                 {
-                    string msg = execResult.Stdout + Environment.NewLine + execResult.Stderr;
+                    var msg = execResult.Stdout + Environment.NewLine + execResult.Stderr;
                     throw new Exception(msg);
                 }
                 var (RoleId, SecretId) = await this.GetAppRoleCreds("test-role");
                 await this.LoadDataAsync("http://localhost:8200", values).ConfigureAwait(false);
 
                 // act
-                ConfigurationBuilder builder = new ConfigurationBuilder();
+                var builder = new ConfigurationBuilder();
                 builder.AddVaultConfiguration(
                     () => new VaultOptions("http://localhost:8200", new AppRoleAuthMethodInfo(RoleId, SecretId), reloadOnChange: true, reloadCheckIntervalSeconds: 10, omitVaultKeyName: true, alwaysAddTrailingSlashToBasePath: false),
                     "myservice-config",
                     "secret",
-                    this._logger);
+                    this.logger);
                 var configurationRoot = builder.Build();
 
                 // assert
@@ -560,7 +560,7 @@ namespace VaultSharp.Extensions.Configuration.Test
             }
             finally
             {
-                cts.Cancel();
+                await cts.CancelAsync();
                 await container.DisposeAsync().ConfigureAwait(false);
             }
         }
@@ -602,7 +602,7 @@ namespace VaultSharp.Extensions.Configuration.Test
             }           
             finally
             {
-                cts.Cancel();
+                await cts.CancelAsync();
                 await container.DisposeAsync().ConfigureAwait(false);
             }
 
