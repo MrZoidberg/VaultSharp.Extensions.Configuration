@@ -36,12 +36,12 @@ public partial class IntegrationTests
             await this.LoadDataAsync("https://localhost:8200", values).ConfigureAwait(false);
 
             // act
-            ConfigurationBuilder builder = new ConfigurationBuilder();
+            var builder = new ConfigurationBuilder();
             builder.AddVaultConfiguration(
                 () => new VaultOptions("https://localhost:8200", "root", additionalCharactersForConfigurationPath: new[] { '.' }, insecureConnection: true),
                 "test",
                 "secret",
-                this._logger);
+                this.logger);
             var configurationRoot = builder.Build();
 
             // assert
@@ -76,12 +76,12 @@ public partial class IntegrationTests
             await this.LoadDataAsync("https://localhost:8200", values).ConfigureAwait(false);
 
             // act
-            ConfigurationBuilder builder = new ConfigurationBuilder();
+            var builder = new ConfigurationBuilder();
             builder.AddVaultConfiguration(
                 () => new VaultOptions("https://localhost:8200", "root", additionalCharactersForConfigurationPath: new[] { '.' }, insecureConnection: false),
                 "test",
                 "secret",
-                this._logger);
+                this.logger);
             Action act = () => builder.Build();
 
 
@@ -117,15 +117,12 @@ public partial class IntegrationTests
             await this.LoadDataAsync("https://localhost:8200", values).ConfigureAwait(false);
 
             // act
-            ConfigurationBuilder builder = new ConfigurationBuilder();
+            var builder = new ConfigurationBuilder();
             builder.AddVaultConfiguration(
-                () => new VaultOptions("https://localhost:8200", "root", additionalCharactersForConfigurationPath: new[] { '.' }, insecureConnection: false, serverCertificateCustomValidationCallback: (message, cert, chain, errors) =>
-                {
-                    return true;
-                }),
+                () => new VaultOptions("https://localhost:8200", "root", additionalCharactersForConfigurationPath: new[] { '.' }, insecureConnection: false, serverCertificateCustomValidationCallback: (message, cert, chain, errors) => true),
                 "test",
                 "secret",
-                this._logger);
+                this.logger);
             var configurationRoot = builder.Build();
 
             // assert
