@@ -92,6 +92,8 @@ namespace VaultSharp.Extensions.Configuration
                                 {
                                     clientHandler.ServerCertificateCustomValidationCallback = this.ConfigurationSource.Options.ServerCertificateCustomValidationCallback;
                                 }
+
+                                this.ConfigurationSource.Options.PostProcessHttpClientHandlerAction?.Invoke(clientHandler);
                             }
                         }
                     };

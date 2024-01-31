@@ -163,5 +163,17 @@ namespace VaultSharp.Extensions.Configuration
         /// An optional action to post-process the HttpClientHandler. Used to manually validate the server certificate. Ignored if AcceptInsecureConnection is true.
         /// </summary>
         public Func<HttpRequestMessage, X509Certificate2?, X509Chain?, SslPolicyErrors, bool>? ServerCertificateCustomValidationCallback { get; set;}
+
+        /// <summary>
+        /// An optional hook to allow custom configuration of the HttpClientHandler.
+        /// This is useful if you need to customize the HTTP client's proxy settings, for example.
+        /// </summary>
+        /// <remarks>
+        /// The action will be invoked after the VaultSharp provider applies the AcceptInsecureConnection and ServerCertificateCustomValidationCallback
+        /// customizations, if you enabled them.  Be aware that if you overwrite the HttpMessageHandler's ServerCertificateCustomValidationCallback 
+        /// in your action-handler method, you will cancel out the effect of enabling the AcceptInsecureConnection and/or
+        /// ServerCertificateCustomValidationCallback options.
+        /// </remarks>
+        public Action<HttpMessageHandler>? PostProcessHttpClientHandlerAction { get; set; }
     }
 }
