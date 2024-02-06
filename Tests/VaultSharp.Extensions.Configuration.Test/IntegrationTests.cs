@@ -616,6 +616,58 @@ namespace VaultSharp.Extensions.Configuration.Test
                     It.Is<Func<It.IsAnyType, Exception?, string>>((v, t) => true)), Times.Once);
 
         }
+
+        [Fact]
+        public async Task Success_Proxy_Verify_Custom_Hook_Invoked()
+        {
+            // arrange
+            using CancellationTokenSource cts = new CancellationTokenSource();
+            var values =
+              new Dictionary<string, IEnumerable<KeyValuePair<string, object>>>
+              {
+                    {
+                        "myservice-config", new[]
+                        {
+                            new KeyValuePair<string, object>("option1", "value1"),
+                            new KeyValuePair<string, object>("subsection", new {option2 = "value2"}),
+                        }
+                    },
+              };
+
+            var container = this.PrepareVaultContainer();
+            try
+            {
+                await container.StartAsync(cts.Token).ConfigureAwait(false);
+                await this.LoadDataAsync("http://localhost:8200", values).ConfigureAwait(false);
+
+                // Moq mock of PostProcessHttpClientHandlerAction implementation:
+                var mockConfigureProxyAction = new Mock<Action<HttpMessageHandler>>();
+
+                // act
+                ConfigurationBuilder builder = new ConfigurationBuilder();
+                builder.AddVaultConfiguration(
+                    () => new VaultOptions("http://localhost:8200", new TokenAuthMethodInfo("root"), reloadOnChange: true, reloadCheckIntervalSeconds: 10, omitVaultKeyName: true)
+                    {
+                        PostProcessHttpClientHandlerAction = mockConfigureProxyAction.Object
+                    },
+                    "myservice-config",
+                    "secret",
+                    this.logger);
+                var configurationRoot = builder.Build();
+
+                // assert secrets were loaded successfully:
+                configurationRoot.GetValue<string>("option1").Should().Be("value1");
+                configurationRoot.GetSection("subsection").GetValue<string>("option2").Should().Be("value2");
+
+                // assert that PostProcessHttpClientHandlerAction was actually invoked, and a HttpMessageHandler was passed:
+                mockConfigureProxyAction.Verify(x => x(It.IsAny<HttpMessageHandler>()), Times.Once);
+            }
+            finally
+            {
+                cts.Cancel();
+                await container.DisposeAsync().ConfigureAwait(false);
+            }
+        }
     }
 
     public class TestConfigObject
