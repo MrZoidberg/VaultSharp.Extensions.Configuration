@@ -193,6 +193,97 @@ namespace VaultSharp.Extensions.Configuration.Test
             }
         }
 
+         [Fact]
+        public async Task Success_SimpleTestWithKeyPrefix_TokenAuth()
+        {
+            // arrange
+            var values =
+                new Dictionary<string, IEnumerable<KeyValuePair<string, object>>>
+                {
+                    {
+                        "test", new[]
+                        {
+                            new KeyValuePair<string, object>("option1", "value1"),
+                            new KeyValuePair<string, object>("option3", 5),
+                            new KeyValuePair<string, object>("option4", true),
+                            new KeyValuePair<string, object>("option5", new[] { "v1", "v2", "v3" }),
+                            new KeyValuePair<string, object>(
+                                "option6",
+                                new[]
+                                {
+                                    new TestConfigObject() {OptionA = "a1", OptionB = "b1"},
+                                    new TestConfigObject() {OptionA = "a2", OptionB = "b2"},
+                                }),
+                        }
+                    },
+                    {
+                        "test/subsection", new[]
+                        {
+                            new KeyValuePair<string, object>("option2", "value2"),
+                        }
+                    },
+                    {
+                        "test/otherSubsection.otherSubsection2/otherSubsection3.otherSubsection4.otherSubsection5", new[]
+                        {
+                            new KeyValuePair<string, object>("option7", "value7"),
+                        }
+                    },
+                    {
+                        "test/subsection/testsection", new[]
+                        {
+                            new KeyValuePair<string, object>("option8", "value8"),
+                        }
+                    },
+                };
+
+            var container = this.PrepareVaultContainer();
+            try
+            {
+                await container.StartAsync().ConfigureAwait(false);
+                await this.LoadDataAsync("http://localhost:8200", values).ConfigureAwait(false);
+
+                // act
+                var builder = new ConfigurationBuilder();
+
+                var keyPrefix = "MyConfig";
+                builder.AddVaultConfiguration(
+                    () => new VaultOptions("http://localhost:8200", "root", additionalCharactersForConfigurationPath: new[] { '.' }, keyPrefix: keyPrefix),
+                    "test",
+                    "secret",
+                    this.logger);
+                var configurationRoot = builder.Build();
+
+                // assert
+                configurationRoot.GetValue<string>($"{keyPrefix}:option1").Should().Be("value1");
+                configurationRoot.GetValue<int>($"{keyPrefix}:option3").Should().Be(5);
+                configurationRoot.GetValue<bool>($"{keyPrefix}:option4").Should().Be(true);
+                configurationRoot.GetValue<string>($"{keyPrefix}:option5:0").Should().Be("v1");
+                configurationRoot.GetValue<string>($"{keyPrefix}:option5:1").Should().Be("v2"); 
+                configurationRoot.GetValue<string>($"{keyPrefix}:option5:2").Should().Be("v3");
+                var t1 = new TestConfigObject();
+                configurationRoot.Bind($"{keyPrefix}:option6:0", t1);
+                t1.OptionA.Should().Be("a1");
+                t1.OptionB.Should().Be("b1");
+                var t2 = new TestConfigObject();
+                configurationRoot.Bind($"{keyPrefix}:option6:1", t2);
+                t2.OptionA.Should().Be("a2");
+                t2.OptionB.Should().Be("b2");
+                configurationRoot.GetSection($"{keyPrefix}:subsection").GetValue<string>("option2").Should().Be("value2");
+                configurationRoot.GetSection($"{keyPrefix}:otherSubsection")
+                    .GetSection($"otherSubsection2")
+                    .GetSection("otherSubsection3")
+                    .GetSection("otherSubsection4")
+                    .GetSection("otherSubsection5")
+                    .GetValue<string>("option7").Should().Be("value7");
+                configurationRoot.GetSection($"{keyPrefix}:subsection").GetSection("testsection").GetValue<string>("option8").Should().Be("value8");
+            }
+            finally
+            {
+                await container.DisposeAsync().ConfigureAwait(false);
+            }
+        }
+
+
         [Fact]
         public async Task Success_SimpleTestOmitVaultKey_TokenAuth()
         {
@@ -286,6 +377,70 @@ namespace VaultSharp.Extensions.Configuration.Test
                 configurationRoot.GetSection("subsection").GetValue<string>("option2").Should().Be("value2_new");
                 configurationRoot.GetSection("subsection3").GetValue<string>("option3").Should().Be("value3_new");
                 configurationRoot.GetSection("testsection").GetValue<string>("option4").Should().Be("value4_new");
+
+                changeWatcher.Dispose();
+            }
+            finally
+            {
+                await cts.CancelAsync();
+                await container.DisposeAsync().ConfigureAwait(false);
+            }
+        }
+
+         [Fact]
+        public async Task Success_WatcherTestWithPrefix_TokenAuth()
+        {
+            // arrange
+            using var cts = new CancellationTokenSource();
+
+            var values =
+                new Dictionary<string, IEnumerable<KeyValuePair<string, object>>>
+                {
+                    { "test", new[] { new KeyValuePair<string, object>("option1", "value1") } },
+                    { "test/subsection", new[] { new KeyValuePair<string, object>("option2", "value2") } },
+                };
+
+            var container = this.PrepareVaultContainer();
+            try
+            {
+                await container.StartAsync().ConfigureAwait(false);
+                await this.LoadDataAsync("http://localhost:8200", values).ConfigureAwait(false);
+
+                var testPrefix = "MyConfig";
+
+                // act
+                var builder = new ConfigurationBuilder();
+                builder.AddVaultConfiguration(
+                    () => new VaultOptions("http://localhost:8200", "root", reloadOnChange: true, reloadCheckIntervalSeconds: 10, keyPrefix: testPrefix),
+                    "test",
+                    "secret",
+                    this.logger);
+                var configurationRoot = builder.Build();
+                var changeWatcher = new VaultChangeWatcher(configurationRoot, this.logger);
+                await changeWatcher.StartAsync(cts.Token).ConfigureAwait(false);
+                var reloadToken = configurationRoot.GetReloadToken();
+
+                // assert
+                configurationRoot.GetValue<string>($"{testPrefix}:option1").Should().Be("value1");
+                configurationRoot.GetSection($"{testPrefix}:subsection").GetValue<string>("option2").Should().Be("value2");
+                reloadToken.HasChanged.Should().BeFalse();
+
+                // load new data and wait for reload
+                values = new Dictionary<string, IEnumerable<KeyValuePair<string, object>>>
+                {
+                    { "test", new[] { new KeyValuePair<string, object>("option1", "value1_new") } },
+                    { "test/subsection", new[] { new KeyValuePair<string, object>("option2", "value2_new") } },
+                    { "test/subsection3", new[] { new KeyValuePair<string, object>("option3", "value3_new") } },
+                    { "test/testsection", new[] { new KeyValuePair<string, object>("option4", "value4_new") } },
+                };
+                await this.LoadDataAsync("http://localhost:8200", values).ConfigureAwait(false);
+                await Task.Delay(TimeSpan.FromSeconds(15), cts.Token).ConfigureAwait(true);
+
+                reloadToken.HasChanged.Should().BeTrue();
+                configurationRoot.GetValue<string>($"{testPrefix}:option1").Should().Be("value1_new");
+                configurationRoot.GetSection($"{testPrefix}:subsection").GetValue<string>("option2").Should().Be("value2_new");
+                configurationRoot.GetSection($"{testPrefix}:subsection3").GetValue<string>("option3").Should().Be("value3_new");
+                configurationRoot.GetSection($"{testPrefix}:testsection").GetValue<string>("option4").Should().Be("value4_new");
 
                 changeWatcher.Dispose();
             }

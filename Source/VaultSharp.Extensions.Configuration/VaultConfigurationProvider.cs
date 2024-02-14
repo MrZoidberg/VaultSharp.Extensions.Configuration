@@ -136,6 +136,19 @@ namespace VaultSharp.Extensions.Configuration
                 var len = this.ConfigurationSource.BasePath.TrimStart('/').Length;
                 key = key.TrimStart('/').Substring(len).TrimStart('/').Replace('/', ':');
                 key = this.ReplaceTheAdditionalCharactersForConfigurationPath(key);
+
+                if (this.ConfigurationSource.Options.KeyPrefix != null)
+                {
+                    if (string.IsNullOrEmpty(key))
+                    {
+                        key = this.ConfigurationSource.Options.KeyPrefix;
+                    }
+                    else
+                    {
+                        key = this.ConfigurationSource.Options.KeyPrefix + ":" + key;
+                    }
+                    
+                }
                 var data = secretData.SecretData.Data;
 
                 var shouldSetValue = true;
