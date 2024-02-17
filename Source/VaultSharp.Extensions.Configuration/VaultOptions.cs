@@ -22,6 +22,7 @@ namespace VaultSharp.Extensions.Configuration
         /// <param name="reloadOnChange">Reload secrets if changed in Vault.</param>
         /// <param name="reloadCheckIntervalSeconds">Interval in seconds to check Vault for any changes.</param>
         /// <param name="omitVaultKeyName">Omit Vault Key Name in Configuration Keys.</param>
+        /// <param name="keyPrefix">Store all Vault keys under this prefix </param>
         /// <param name="additionalCharactersForConfigurationPath">Additional characters for the Configuration path.</param>
         /// <param name="namespace">Vault namespace.</param>
         /// <param name="alwaysAddTrailingSlashToBasePath">Should a trailing slash be added to the base path. See AlwaysAddTrailingSlashToBasePath property for details </param>
@@ -35,6 +36,7 @@ namespace VaultSharp.Extensions.Configuration
             bool reloadOnChange = false,
             int reloadCheckIntervalSeconds = 300,
             bool omitVaultKeyName = false,
+            string? keyPrefix = null,
             IEnumerable<char>? additionalCharactersForConfigurationPath = null,
             string? @namespace = null,
             bool alwaysAddTrailingSlashToBasePath = true,
@@ -48,6 +50,7 @@ namespace VaultSharp.Extensions.Configuration
             this.ReloadOnChange = reloadOnChange;
             this.ReloadCheckIntervalSeconds = reloadCheckIntervalSeconds;
             this.OmitVaultKeyName = omitVaultKeyName;
+            this.KeyPrefix = keyPrefix;
             this.AdditionalCharactersForConfigurationPath = additionalCharactersForConfigurationPath ?? Array.Empty<char>();
             this.Namespace = @namespace;
             this.AlwaysAddTrailingSlashToBasePath = alwaysAddTrailingSlashToBasePath;
@@ -132,6 +135,11 @@ namespace VaultSharp.Extensions.Configuration
         /// Gets a value indicating whether the Vault key should be ommited when generation Configuration key names.
         /// </summary>
         public bool OmitVaultKeyName { get; }
+
+        /// <summary>
+        /// Store all read keys under this Configuration key name prefix.
+        /// </summary>
+        public string? KeyPrefix { get; }
 
         /// <summary>
         /// Gets an array of characters that will be used as a path to form the Configuration.
