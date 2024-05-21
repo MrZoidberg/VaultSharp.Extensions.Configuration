@@ -46,7 +46,7 @@ Data is checked using version information from key metadata.
 ```csharp
 config.AddVaultConfiguration(
         () => new VaultOptions(
-            "htpp://localhost:8200",
+            "http://localhost:8200",
             "root",
             reloadOnChange: true,
             reloadCheckIntervalSeconds: 60),
