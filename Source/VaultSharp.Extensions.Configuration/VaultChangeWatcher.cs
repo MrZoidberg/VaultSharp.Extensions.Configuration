@@ -80,7 +80,7 @@ namespace VaultSharp.Extensions.Configuration
                 }
                 catch (Exception ex)
                 {
-                    this._logger?.LogError(ex,$"An exception occurred in {nameof(VaultChangeWatcher)}");
+                    this._logger?.LogError(ex, $"An exception occurred in {nameof(VaultChangeWatcher)}");
                 }
             }
         }
