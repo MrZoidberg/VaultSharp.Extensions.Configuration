@@ -32,7 +32,7 @@ namespace VaultSharp.Extensions.Configuration
             }
 
             this._logger = logger;
-            
+
             this._configProviders = configurationRoot.Providers.OfType<VaultConfigurationProvider>().Where(p => p.ConfigurationSource.Options.ReloadOnChange).ToList() !;
         }
 
@@ -54,25 +54,33 @@ namespace VaultSharp.Extensions.Configuration
 
             while (!stoppingToken.IsCancellationRequested)
             {
-                await Task.Delay(TimeSpan.FromSeconds(minTime), stoppingToken).ConfigureAwait(false);
-                if (stoppingToken.IsCancellationRequested)
+                try
                 {
-                    break;
-                }
+                    await Task.Delay(TimeSpan.FromSeconds(minTime), stoppingToken).ConfigureAwait(false);
+                    if (stoppingToken.IsCancellationRequested)
+                    {
+                        break;
+                    }
 
-                for (var j = 0; j < this._configProviders.Count(); j++)
+                    for (var j = 0; j < this._configProviders.Count(); j++)
+                    {
+                        var timer = timers[j];
+                        timer -= minTime;
+                        if (timer <= 0)
+                        {
+                            this._configProviders.ElementAt(j).Load();
+                            timers[j] = this._configProviders.ElementAt(j).ConfigurationSource.Options
+                                .ReloadCheckIntervalSeconds;
+                        }
+                        else
+                        {
+                            timers[j] = timer;
+                        }
+                    }
+                }
+                catch (Exception ex)
                 {
-                    var timer = timers[j];
-                    timer -= minTime;
-                    if (timer <= 0)
-                    {
-                        this._configProviders.ElementAt(j).Load();
-                        timers[j] = this._configProviders.ElementAt(j).ConfigurationSource.Options.ReloadCheckIntervalSeconds;
-                    }
-                    else
-                    {
-                        timers[j] = timer;
-                    }
+                    this._logger?.LogError(ex, $"An exception occurred in {nameof(VaultChangeWatcher)}");
                 }
             }
         }
