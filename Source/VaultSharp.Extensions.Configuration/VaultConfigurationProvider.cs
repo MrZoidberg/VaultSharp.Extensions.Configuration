@@ -52,7 +52,7 @@ namespace VaultSharp.Extensions.Configuration
             {
                 if (this.vaultClient == null)
                 {
-                    IAuthMethodInfo authMethod;
+                    IAuthMethodInfo? authMethod = null;
                     if (this.ConfigurationSource.Options.AuthMethod != null)
                     {
                         authMethod = this.ConfigurationSource.Options.AuthMethod;
@@ -65,7 +65,7 @@ namespace VaultSharp.Extensions.Configuration
                             this.ConfigurationSource.Options.VaultRoleId,
                             this.ConfigurationSource.Options.VaultSecret);
                     }
-                    else
+                    else if (!string.IsNullOrEmpty(this.ConfigurationSource.Options.VaultToken))
                     {
                         this.logger?.LogDebug("VaultConfigurationProvider: using Token authentication");
                         authMethod = new TokenAuthMethodInfo(this.ConfigurationSource.Options.VaultToken);
