@@ -73,7 +73,9 @@ Build: Restore
 # Depends on Build
 Test: Build
 	@echo "--- Running Tests ---"
-	$(DOTNET) test $(TEST_PROJECT) --configuration $(CONFIGURATION) --no-build --no-restore
+	$(DOTNET) test $(TEST_PROJECT) --configuration $(CONFIGURATION) --no-build --no-restore --collect:"XPlat Code Coverage" --logger:trx \
+	--logger html;LogFileName=VaultSharp.Extensions.Configuration.Test.html /p:CollectCoverage=true /p:CoverletOutputFormat=opencover /p:CoverletOutput=coverage.cobertura.xml --results-directory ./coverage \
+	-p:CoverletOutput=coverage.cobertura.xml
 	@echo "Tests complete."
 
 # Create NuGet packages
