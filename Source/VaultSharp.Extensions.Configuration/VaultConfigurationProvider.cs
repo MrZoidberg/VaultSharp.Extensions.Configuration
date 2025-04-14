@@ -11,7 +11,6 @@ namespace VaultSharp.Extensions.Configuration
     using System.Threading.Tasks;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.Logging;
-    using Microsoft.VisualStudio.Threading;  
     using VaultSharp;
     using VaultSharp.Core;
     using VaultSharp.V1.AuthMethods;
@@ -100,10 +99,10 @@ namespace VaultSharp.Extensions.Configuration
                     this.vaultClient = new VaultClient(vaultClientSettings);
                 }
 
-                using var ctx = new JoinableTaskContext();
-                var jtf = new JoinableTaskFactory(ctx);
-                var hasChanges = jtf.RunAsync(
-                    async () => await this.LoadVaultDataAsync(this.vaultClient).ConfigureAwait(true)).Join();
+                var hasChanges = this.LoadVaultDataAsync(this.vaultClient)
+                     .ConfigureAwait(false)
+                     .GetAwaiter()
+                     .GetResult();
 
                 if (hasChanges)
                 {
