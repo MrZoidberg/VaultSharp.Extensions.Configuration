@@ -12,6 +12,8 @@ env:
   DOTNET_CLI_TELEMETRY_OPTOUT: true
   # Set the build number in MinVer
   MINVERBUILDMETADATA: build.${{github.run_number}}
+  # Set the Vault image tag to use for testing
+  TEST_VAULT_IMAGE_TAG: 1.13.3
 
 jobs:
   build:
@@ -33,6 +35,9 @@ jobs:
     #- name: 'Fix permissions'
     #  run: chmod +x ./Tests/VaultSharp.Extensions.Configuration.Test/approle.sh && chmod +x ./Tests/VaultSharp.Extensions.Configuration.Test/approle_nolist.sh
     #  shell: bash
+    - name: Pull Vault image  
+      run: docker pull vault:${TEST_VAULT_IMAGE_TAG}
+      shell: pwsh
     - name: 'Dotnet Tool Restore'
       run: dotnet tool restore
       shell: pwsh
