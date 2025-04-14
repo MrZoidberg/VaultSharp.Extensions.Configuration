@@ -42,7 +42,7 @@ jobs:
     #  run: chmod +x ./Tests/VaultSharp.Extensions.Configuration.Test/approle.sh && chmod +x ./Tests/VaultSharp.Extensions.Configuration.Test/approle_nolist.sh
     #  shell: bash
     - name: Pull Vault image  
-      run: docker pull vault:${TEST_VAULT_IMAGE_TAG}
+      run: docker pull vault:${{ env.TEST_VAULT_IMAGE_TAG }}
       shell: pwsh
     - name: 'Dotnet Tool Restore'
       run: dotnet tool restore
