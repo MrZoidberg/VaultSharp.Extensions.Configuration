@@ -11,10 +11,15 @@ env:
   # Set the build number in MinVer
   MINVERBUILDMETADATA: build.${{github.run_number}}
 
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+
 jobs:
   build:
     name: Build
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -31,11 +36,14 @@ jobs:
           6.0.x
           7.0.x
           8.0.x
-    - name: 'Fix permissions'
-      run: chmod +x ./Tests/VaultSharp.Extensions.Configuration.Test/approle.sh && chmod +x ./Tests/VaultSharp.Extensions.Configuration.Test/approle_nolist.sh
-      shell: bash
+    #- name: 'Fix permissions'
+    #  run: chmod +x ./Tests/VaultSharp.Extensions.Configuration.Test/approle.sh && chmod +x ./Tests/VaultSharp.Extensions.Configuration.Test/approle_nolist.sh
+    #  shell: bash
     - name: 'Dotnet Tool Restore'
       run: dotnet tool restore
+      shell: pwsh
+    - name: 'Dotnet Cake Bootstrap'
+      run: dotnet cake bootstrap
       shell: pwsh
     - name: 'Dotnet Cake Build'
       run: dotnet cake --target=Build
