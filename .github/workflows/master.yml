@@ -33,15 +33,9 @@ jobs:
     - name: 'Fix permissions'
       run: chmod +x ./Tests/VaultSharp.Extensions.Configuration.Test/approle.sh && chmod +x ./Tests/VaultSharp.Extensions.Configuration.Test/approle_nolist.sh
       shell: bash
-    - name: 'Dotnet Tool Restore'
-      run: dotnet tool restore
-      shell: pwsh
-    - name: 'Dotnet Cake Build'
-      run: dotnet cake --target=Build
-      shell: pwsh
-    - name: 'Dotnet Cake Test'
-      run: dotnet cake --target=Test
-      shell: pwsh    
+    - name: 'Pack'
+      run: make Pack
+      shell: bash 
     - name: Copy Coverage To Predictable Location
       run: cp coverage/*/coverage.cobertura.xml coverage/coverage.cobertura.xml
     - name: 'Extract summary from Code Coverage Summary Report'
