@@ -36,9 +36,6 @@ jobs:
     - name: 'Dotnet Tool Restore'
       run: dotnet tool restore
       shell: pwsh
-    - name: 'Dotnet Cake Bootstrap'
-      run: dotnet cake bootstrap
-      shell: pwsh
     - name: 'Dotnet Cake Build'
       run: dotnet cake --target=Build
       shell: pwsh
