@@ -33,6 +33,9 @@ jobs:
     - name: 'Fix permissions'
       run: chmod +x ./Tests/VaultSharp.Extensions.Configuration.Test/approle.sh && chmod +x ./Tests/VaultSharp.Extensions.Configuration.Test/approle_nolist.sh
       shell: bash
+    - name: Test      
+      run: make Test
+      shell: bash
     - name: 'Pack'
       run: make Pack
       shell: bash 
