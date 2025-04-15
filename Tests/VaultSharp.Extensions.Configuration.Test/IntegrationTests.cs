@@ -16,6 +16,7 @@ namespace VaultSharp.Extensions.Configuration.Test
     using Serilog;
     using Serilog.Extensions.Logging;
     using VaultSharp.Core;
+    using VaultSharp.V1.AuthMethods;
     using VaultSharp.V1.AuthMethods.AppRole;
     using VaultSharp.V1.AuthMethods.Token;
     using Xunit;
@@ -35,7 +36,7 @@ namespace VaultSharp.Extensions.Configuration.Test
             this.logger = new SerilogLoggerProvider(Log.Logger).CreateLogger(nameof(IntegrationTests));
         }
 
-        private IContainer PrepareVaultContainer(bool enableSSL = false, string? script = null)
+        private IContainer PrepareVaultContainer(bool enableSSL = false, string? script = null, string tokenId = "root")
         {
             var builder = new ContainerBuilder()
                 .WithImage("vault:1.13.3")
@@ -43,7 +44,7 @@ namespace VaultSharp.Extensions.Configuration.Test
                 .WithPortBinding(8200, 8200)
                 .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(8200))
                 .WithEnvironment("VAULT_UI", "true")
-                .WithEnvironment("VAULT_DEV_ROOT_TOKEN_ID", "root")
+                .WithEnvironment("VAULT_DEV_ROOT_TOKEN_ID", tokenId)
                 .WithEnvironment("VAULT_DEV_LISTEN_ADDRESS", "0.0.0.0:8200");
 
             if (enableSSL)
@@ -813,6 +814,56 @@ namespace VaultSharp.Extensions.Configuration.Test
                 // assert secrets were loaded successfully:
                 configurationRoot.GetValue<string>("option1").Should().Be("value1");
                 configurationRoot.GetSection("subsection").GetValue<string>("option2").Should().Be("value2");
+
+                // assert that PostProcessHttpClientHandlerAction was actually invoked, and a HttpMessageHandler was passed:
+                mockConfigureProxyAction.Verify(x => x(It.IsAny<HttpMessageHandler>()), Times.Once);
+            }
+            finally
+            {
+                cts.Cancel();
+                await container.DisposeAsync().ConfigureAwait(false);
+            }
+        }
+
+        [Fact]
+        public async Task Success_TokenNoAuthMethod()
+        {
+            // arrange
+            using CancellationTokenSource cts = new CancellationTokenSource();
+            var values =
+              new Dictionary<string, IEnumerable<KeyValuePair<string, object>>>
+              {
+                    {
+                        "myservice-config", new[]
+                        {
+                            new KeyValuePair<string, object>("option1", "value1")
+                        }
+                    },
+              };
+
+            var container = this.PrepareVaultContainer(tokenId: "");
+            try
+            {
+                await container.StartAsync(cts.Token).ConfigureAwait(false);
+                await this.LoadDataAsync("http://localhost:8200", values).ConfigureAwait(false);
+
+                // Moq mock of PostProcessHttpClientHandlerAction implementation:
+                var mockConfigureProxyAction = new Mock<Action<HttpMessageHandler>>();
+
+                // act
+                ConfigurationBuilder builder = new ConfigurationBuilder();
+                builder.AddVaultConfiguration(
+                    () => new VaultOptions("http://localhost:8200", (IAuthMethodInfo)null!)
+                    {
+                        PostProcessHttpClientHandlerAction = mockConfigureProxyAction.Object
+                    },
+                    "myservice-config",
+                    "secret",
+                    this.logger);
+                var configurationRoot = builder.Build();
+
+                // assert secrets were loaded successfully:
+                configurationRoot.GetValue<string>("option1").Should().Be("value1");
 
                 // assert that PostProcessHttpClientHandlerAction was actually invoked, and a HttpMessageHandler was passed:
                 mockConfigureProxyAction.Verify(x => x(It.IsAny<HttpMessageHandler>()), Times.Once);
