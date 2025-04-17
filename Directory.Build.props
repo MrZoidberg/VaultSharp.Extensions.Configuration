@@ -5,9 +5,9 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <PropertyGroup Label="Package">
-    <Authors>Mikhail Merkulov</Authors>
-    <Company>Mikhail Merkulov</Company>
-    <Copyright>Copyright 2023 © Mikhail Merkulov. All rights Reserved</Copyright>
+    <Authors>Mykhaylo Merkulov</Authors>
+    <Company>Mykhaylo Merkulov</Company>
+    <Copyright>Copyright 2025 © Mykhaylo Merkulov. All rights Reserved</Copyright>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/MrZoidberg/VaultSharp.Extensions.Configuration</PackageProjectUrl>
