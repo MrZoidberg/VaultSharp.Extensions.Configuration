@@ -825,7 +825,7 @@ namespace VaultSharp.Extensions.Configuration.Test
             }
         }
 
-        [Fact]
+        [Fact(Skip = "vault-proxy required")]
         public async Task Success_TokenNoAuthMethod()
         {
             // arrange
