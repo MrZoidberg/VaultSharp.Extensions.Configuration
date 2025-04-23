@@ -7,7 +7,7 @@ namespace VaultSharp.Extensions.Configuration
     /// <summary>
     /// Vault configuration source.
     /// </summary>
-    public sealed class VaultConfigurationSource : IConfigurationSource
+    public class VaultConfigurationSource : IConfigurationSource
     {
         /// <summary>
         /// Default Vault URL.
@@ -56,6 +56,6 @@ namespace VaultSharp.Extensions.Configuration
         /// </summary>
         /// <param name="builder">Configuration builder.</param>
         /// <returns>Instance of <see cref="IConfigurationProvider"/>.</returns>
-        public IConfigurationProvider Build(IConfigurationBuilder builder) => new VaultConfigurationProvider(this, this.logger);
+        public virtual IConfigurationProvider Build(IConfigurationBuilder builder) => new VaultConfigurationProvider(this, this.logger);
     }
 }

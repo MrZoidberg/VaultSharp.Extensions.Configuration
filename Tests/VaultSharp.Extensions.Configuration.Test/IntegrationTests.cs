@@ -16,6 +16,7 @@ namespace VaultSharp.Extensions.Configuration.Test
     using Serilog;
     using Serilog.Extensions.Logging;
     using VaultSharp.Core;
+    using VaultSharp.V1.AuthMethods;
     using VaultSharp.V1.AuthMethods.AppRole;
     using VaultSharp.V1.AuthMethods.Token;
     using Xunit;
@@ -35,7 +36,7 @@ namespace VaultSharp.Extensions.Configuration.Test
             this.logger = new SerilogLoggerProvider(Log.Logger).CreateLogger(nameof(IntegrationTests));
         }
 
-        private IContainer PrepareVaultContainer(bool enableSSL = false, string? script = null)
+        private IContainer PrepareVaultContainer(bool enableSSL = false, string? script = null, string tokenId = "root")
         {
             var builder = new ContainerBuilder()
                 .WithImage("vault:1.13.3")
@@ -43,7 +44,7 @@ namespace VaultSharp.Extensions.Configuration.Test
                 .WithPortBinding(8200, 8200)
                 .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(8200))
                 .WithEnvironment("VAULT_UI", "true")
-                .WithEnvironment("VAULT_DEV_ROOT_TOKEN_ID", "root")
+                .WithEnvironment("VAULT_DEV_ROOT_TOKEN_ID", tokenId)
                 .WithEnvironment("VAULT_DEV_LISTEN_ADDRESS", "0.0.0.0:8200");
 
             if (enableSSL)
@@ -87,8 +88,7 @@ namespace VaultSharp.Extensions.Configuration.Test
                     data.Add(pair.Key, pair.Value);
                 }
 
-                await vaultClient.V1.Secrets.KeyValue.V2.WriteSecretAsync(sectionPair.Key, data)
-                    .ConfigureAwait(false);
+                await vaultClient.V1.Secrets.KeyValue.V2.WriteSecretAsync(sectionPair.Key, data);
             }
         }
 
@@ -151,8 +151,8 @@ namespace VaultSharp.Extensions.Configuration.Test
             var container = this.PrepareVaultContainer();
             try
             {
-                await container.StartAsync().ConfigureAwait(false);
-                await this.LoadDataAsync("http://localhost:8200", values).ConfigureAwait(false);
+                await container.StartAsync();
+                await this.LoadDataAsync("http://localhost:8200", values);
 
                 // act
                 var builder = new ConfigurationBuilder();
@@ -189,7 +189,7 @@ namespace VaultSharp.Extensions.Configuration.Test
             }
             finally
             {
-                await container.DisposeAsync().ConfigureAwait(false);
+                await container.DisposeAsync();
             }
         }
 
@@ -239,8 +239,8 @@ namespace VaultSharp.Extensions.Configuration.Test
             var container = this.PrepareVaultContainer();
             try
             {
-                await container.StartAsync().ConfigureAwait(false);
-                await this.LoadDataAsync("http://localhost:8200", values).ConfigureAwait(false);
+                await container.StartAsync();
+                await this.LoadDataAsync("http://localhost:8200", values);
 
                 // act
                 var builder = new ConfigurationBuilder();
@@ -279,7 +279,7 @@ namespace VaultSharp.Extensions.Configuration.Test
             }
             finally
             {
-                await container.DisposeAsync().ConfigureAwait(false);
+                await container.DisposeAsync();
             }
         }
 
@@ -302,8 +302,8 @@ namespace VaultSharp.Extensions.Configuration.Test
             var container = this.PrepareVaultContainer();
             try
             {
-                await container.StartAsync().ConfigureAwait(false);
-                await this.LoadDataAsync("http://localhost:8200", values).ConfigureAwait(false);
+                await container.StartAsync();
+                await this.LoadDataAsync("http://localhost:8200", values);
 
                 // act
                 var builder = new ConfigurationBuilder();
@@ -320,7 +320,7 @@ namespace VaultSharp.Extensions.Configuration.Test
             }
             finally
             {
-                await container.DisposeAsync().ConfigureAwait(false);
+                await container.DisposeAsync();
             }
         }
 
@@ -340,8 +340,8 @@ namespace VaultSharp.Extensions.Configuration.Test
             var container = this.PrepareVaultContainer();
             try
             {
-                await container.StartAsync().ConfigureAwait(false);
-                await this.LoadDataAsync("http://localhost:8200", values).ConfigureAwait(false);
+                await container.StartAsync();
+                await this.LoadDataAsync("http://localhost:8200", values);
 
 
                 // act
@@ -353,7 +353,7 @@ namespace VaultSharp.Extensions.Configuration.Test
                     this.logger);
                 var configurationRoot = builder.Build();
                 var changeWatcher = new VaultChangeWatcher(configurationRoot, this.logger);
-                await changeWatcher.StartAsync(cts.Token).ConfigureAwait(false);
+                await changeWatcher.StartAsync(cts.Token);
                 var reloadToken = configurationRoot.GetReloadToken();
 
                 // assert
@@ -369,7 +369,7 @@ namespace VaultSharp.Extensions.Configuration.Test
                     { "test/subsection3", new[] { new KeyValuePair<string, object>("option3", "value3_new") } },
                     { "test/testsection", new[] { new KeyValuePair<string, object>("option4", "value4_new") } },
                 };
-                await this.LoadDataAsync("http://localhost:8200", values).ConfigureAwait(false);
+                await this.LoadDataAsync("http://localhost:8200", values);
                 await Task.Delay(TimeSpan.FromSeconds(15), cts.Token).ConfigureAwait(true);
 
                 reloadToken.HasChanged.Should().BeTrue();
@@ -383,7 +383,7 @@ namespace VaultSharp.Extensions.Configuration.Test
             finally
             {
                 await cts.CancelAsync();
-                await container.DisposeAsync().ConfigureAwait(false);
+                await container.DisposeAsync();
             }
         }
 
@@ -403,8 +403,8 @@ namespace VaultSharp.Extensions.Configuration.Test
             var container = this.PrepareVaultContainer();
             try
             {
-                await container.StartAsync().ConfigureAwait(false);
-                await this.LoadDataAsync("http://localhost:8200", values).ConfigureAwait(false);
+                await container.StartAsync();
+                await this.LoadDataAsync("http://localhost:8200", values);
 
                 var testPrefix = "MyConfig";
 
@@ -417,7 +417,7 @@ namespace VaultSharp.Extensions.Configuration.Test
                     this.logger);
                 var configurationRoot = builder.Build();
                 var changeWatcher = new VaultChangeWatcher(configurationRoot, this.logger);
-                await changeWatcher.StartAsync(cts.Token).ConfigureAwait(false);
+                await changeWatcher.StartAsync(cts.Token);
                 var reloadToken = configurationRoot.GetReloadToken();
 
                 // assert
@@ -433,7 +433,7 @@ namespace VaultSharp.Extensions.Configuration.Test
                     { "test/subsection3", new[] { new KeyValuePair<string, object>("option3", "value3_new") } },
                     { "test/testsection", new[] { new KeyValuePair<string, object>("option4", "value4_new") } },
                 };
-                await this.LoadDataAsync("http://localhost:8200", values).ConfigureAwait(false);
+                await this.LoadDataAsync("http://localhost:8200", values);
                 await Task.Delay(TimeSpan.FromSeconds(15), cts.Token).ConfigureAwait(true);
 
                 reloadToken.HasChanged.Should().BeTrue();
@@ -447,7 +447,7 @@ namespace VaultSharp.Extensions.Configuration.Test
             finally
             {
                 await cts.CancelAsync();
-                await container.DisposeAsync().ConfigureAwait(false);
+                await container.DisposeAsync();
             }
         }
 
@@ -467,8 +467,8 @@ namespace VaultSharp.Extensions.Configuration.Test
             var container = this.PrepareVaultContainer();
             try
             {
-                await container.StartAsync().ConfigureAwait(false);
-                await this.LoadDataAsync("http://localhost:8200", values).ConfigureAwait(false);
+                await container.StartAsync();
+                await this.LoadDataAsync("http://localhost:8200", values);
 
 
                 // act
@@ -480,7 +480,7 @@ namespace VaultSharp.Extensions.Configuration.Test
                     this.logger);
                 var configurationRoot = builder.Build();
                 var changeWatcher = new VaultChangeWatcher(configurationRoot, this.logger);
-                await changeWatcher.StartAsync(cts.Token).ConfigureAwait(false);
+                await changeWatcher.StartAsync(cts.Token);
                 var reloadToken = configurationRoot.GetReloadToken();
 
                 // assert
@@ -489,7 +489,7 @@ namespace VaultSharp.Extensions.Configuration.Test
                 reloadToken.HasChanged.Should().BeFalse();
 
                 // load new data and wait for reload
-                //await this.LoadDataAsync(values).ConfigureAwait(false);
+                //await this.LoadDataAsync(values);
                 await Task.Delay(TimeSpan.FromSeconds(20), cts.Token).ConfigureAwait(true);
 
                 reloadToken.HasChanged.Should().BeFalse();
@@ -501,7 +501,7 @@ namespace VaultSharp.Extensions.Configuration.Test
             finally
             {
                 await cts.CancelAsync();
-                await container.DisposeAsync().ConfigureAwait(false);
+                await container.DisposeAsync();
             }
         }
 
@@ -525,8 +525,8 @@ namespace VaultSharp.Extensions.Configuration.Test
             var container = this.PrepareVaultContainer();
             try
             {
-                await container.StartAsync(cts.Token).ConfigureAwait(false);
-                await this.LoadDataAsync("http://localhost:8200", values).ConfigureAwait(false);
+                await container.StartAsync(cts.Token);
+                await this.LoadDataAsync("http://localhost:8200", values);
 
 
                 // act
@@ -538,7 +538,7 @@ namespace VaultSharp.Extensions.Configuration.Test
                     this.logger);
                 var configurationRoot = builder.Build();
                 var changeWatcher = new VaultChangeWatcher(configurationRoot, this.logger);
-                await changeWatcher.StartAsync(cts.Token).ConfigureAwait(false);
+                await changeWatcher.StartAsync(cts.Token);
                 var reloadToken = configurationRoot.GetReloadToken();
 
                 // assert
@@ -560,7 +560,7 @@ namespace VaultSharp.Extensions.Configuration.Test
                         },
                  };
 
-                await this.LoadDataAsync("http://localhost:8200", values).ConfigureAwait(false);
+                await this.LoadDataAsync("http://localhost:8200", values);
                 await Task.Delay(TimeSpan.FromSeconds(15), cts.Token).ConfigureAwait(true);
 
                 reloadToken.HasChanged.Should().BeTrue();
@@ -573,7 +573,7 @@ namespace VaultSharp.Extensions.Configuration.Test
             finally
             {
                 await cts.CancelAsync();
-                await container.DisposeAsync().ConfigureAwait(false);
+                await container.DisposeAsync();
             }
         }
 
@@ -597,8 +597,8 @@ namespace VaultSharp.Extensions.Configuration.Test
             var container = this.PrepareVaultContainer();
             try
             {
-                await container.StartAsync(cts.Token).ConfigureAwait(false);
-                await this.LoadDataAsync("http://localhost:8200", values).ConfigureAwait(false);
+                await container.StartAsync(cts.Token);
+                await this.LoadDataAsync("http://localhost:8200", values);
 
                 // act
                 var builder = new ConfigurationBuilder();
@@ -616,7 +616,7 @@ namespace VaultSharp.Extensions.Configuration.Test
             finally
             {
                 await cts.CancelAsync();
-                await container.DisposeAsync().ConfigureAwait(false);
+                await container.DisposeAsync();
             }
         }
 
@@ -640,7 +640,7 @@ namespace VaultSharp.Extensions.Configuration.Test
             var container = this.PrepareVaultContainer(script: "approle.sh");
             try
             {
-                await container.StartAsync(cts.Token).ConfigureAwait(false);
+                await container.StartAsync(cts.Token);
                 var execResult = await container.ExecAsync(new[] { "/tmp/script.sh" });
                 if (execResult.ExitCode != 0)
                 {
@@ -648,7 +648,7 @@ namespace VaultSharp.Extensions.Configuration.Test
                     throw new Exception(msg);
                 }
                 var (RoleId, SecretId) = await this.GetAppRoleCreds("test-role");
-                await this.LoadDataAsync("http://localhost:8200", values).ConfigureAwait(false);
+                await this.LoadDataAsync("http://localhost:8200", values);
 
                 // act
                 var builder = new ConfigurationBuilder();
@@ -666,7 +666,7 @@ namespace VaultSharp.Extensions.Configuration.Test
             finally
             {
                 await cts.CancelAsync();
-                await container.DisposeAsync().ConfigureAwait(false);
+                await container.DisposeAsync();
             }
         }
 
@@ -690,7 +690,7 @@ namespace VaultSharp.Extensions.Configuration.Test
             var container = this.PrepareVaultContainer(script: "approle_nolist.sh");
             try
             {
-                await container.StartAsync(cts.Token).ConfigureAwait(false);
+                await container.StartAsync(cts.Token);
                 var execResult = await container.ExecAsync(new[] { "/tmp/script.sh" });
                 if (execResult.ExitCode != 0)
                 {
@@ -698,7 +698,7 @@ namespace VaultSharp.Extensions.Configuration.Test
                     throw new Exception(msg);
                 }
                 var (RoleId, SecretId) = await this.GetAppRoleCreds("test-role");
-                await this.LoadDataAsync("http://localhost:8200", values).ConfigureAwait(false);
+                await this.LoadDataAsync("http://localhost:8200", values);
 
                 // act
                 var builder = new ConfigurationBuilder();
@@ -716,7 +716,7 @@ namespace VaultSharp.Extensions.Configuration.Test
             finally
             {
                 await cts.CancelAsync();
-                await container.DisposeAsync().ConfigureAwait(false);
+                await container.DisposeAsync();
             }
         }
 
@@ -741,8 +741,8 @@ namespace VaultSharp.Extensions.Configuration.Test
             var container = this.PrepareVaultContainer();
             try
             {
-                await container.StartAsync(cts.Token).ConfigureAwait(false);
-                await this.LoadDataAsync("http://localhost:8200", values).ConfigureAwait(false);
+                await container.StartAsync(cts.Token);
+                await this.LoadDataAsync("http://localhost:8200", values);
 
                 // act
                 var builder = new ConfigurationBuilder();
@@ -758,7 +758,7 @@ namespace VaultSharp.Extensions.Configuration.Test
             finally
             {
                 await cts.CancelAsync();
-                await container.DisposeAsync().ConfigureAwait(false);
+                await container.DisposeAsync();
             }
 
             // assert
@@ -792,8 +792,8 @@ namespace VaultSharp.Extensions.Configuration.Test
             var container = this.PrepareVaultContainer();
             try
             {
-                await container.StartAsync(cts.Token).ConfigureAwait(false);
-                await this.LoadDataAsync("http://localhost:8200", values).ConfigureAwait(false);
+                await container.StartAsync(cts.Token);
+                await this.LoadDataAsync("http://localhost:8200", values);
 
                 // Moq mock of PostProcessHttpClientHandlerAction implementation:
                 var mockConfigureProxyAction = new Mock<Action<HttpMessageHandler>>();
@@ -813,6 +813,56 @@ namespace VaultSharp.Extensions.Configuration.Test
                 // assert secrets were loaded successfully:
                 configurationRoot.GetValue<string>("option1").Should().Be("value1");
                 configurationRoot.GetSection("subsection").GetValue<string>("option2").Should().Be("value2");
+
+                // assert that PostProcessHttpClientHandlerAction was actually invoked, and a HttpMessageHandler was passed:
+                mockConfigureProxyAction.Verify(x => x(It.IsAny<HttpMessageHandler>()), Times.Once);
+            }
+            finally
+            {
+                cts.Cancel();
+                await container.DisposeAsync();
+            }
+        }
+
+        [Fact(Skip = "vault-proxy required")]
+        public async Task Success_TokenNoAuthMethod()
+        {
+            // arrange
+            using CancellationTokenSource cts = new CancellationTokenSource();
+            var values =
+              new Dictionary<string, IEnumerable<KeyValuePair<string, object>>>
+              {
+                    {
+                        "myservice-config", new[]
+                        {
+                            new KeyValuePair<string, object>("option1", "value1")
+                        }
+                    },
+              };
+
+            var container = this.PrepareVaultContainer(tokenId: "");
+            try
+            {
+                await container.StartAsync(cts.Token).ConfigureAwait(false);
+                await this.LoadDataAsync("http://localhost:8200", values).ConfigureAwait(false);
+
+                // Moq mock of PostProcessHttpClientHandlerAction implementation:
+                var mockConfigureProxyAction = new Mock<Action<HttpMessageHandler>>();
+
+                // act
+                ConfigurationBuilder builder = new ConfigurationBuilder();
+                builder.AddVaultConfiguration(
+                    () => new VaultOptions("http://localhost:8200", (IAuthMethodInfo)null!)
+                    {
+                        PostProcessHttpClientHandlerAction = mockConfigureProxyAction.Object
+                    },
+                    "myservice-config",
+                    "secret",
+                    this.logger);
+                var configurationRoot = builder.Build();
+
+                // assert secrets were loaded successfully:
+                configurationRoot.GetValue<string>("option1").Should().Be("value1");
 
                 // assert that PostProcessHttpClientHandlerAction was actually invoked, and a HttpMessageHandler was passed:
                 mockConfigureProxyAction.Verify(x => x(It.IsAny<HttpMessageHandler>()), Times.Once);
