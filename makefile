@@ -13,8 +13,7 @@ TEST_PROJECT     = ./Tests/VaultSharp.Extensions.Configuration.Test/VaultSharp.E
 PROJECT_TO_PUBLISH = ./Source/VaultSharp.Extensions.Configuration/VaultSharp.Extensions.Configuration.csproj
 
 # Output Directories
-PUBLISH_DIR      = ./publish
-PUBLISH_APP_DIR  = $(PUBLISH_DIR)/App # Specific dir for the published app
+PUBLISH_DIR      = .\publish
 
 # Version Info (Consider making this dynamic, e.g., from git tag or a file)
 VERSION          = 1.0.0
@@ -31,16 +30,34 @@ DOTNET           = dotnet
 SHELL            = /bin/sh
 
 # -----------------------------------------------------------------------------
+# Cross-platform Shell Helper
+# -----------------------------------------------------------------------------
+# Use 'pwsh' if available, otherwise fallback to 'powershell' on Windows
+ifeq ($(OS),Windows_NT)
+	SHELL := pwsh.exe
+	POWERSHELL := pwsh.exe
+	MD = if (!(Test-Path '$(PUBLISH_DIR)')) { New-Item -ItemType Directory -Path '$(PUBLISH_DIR)' | Out-Null }
+	RM = if (Test-Path '$(PUBLISH_DIR)') { Remove-Item -Recurse -Force '$(PUBLISH_DIR)' }
+	LS = Test-Path "$(PUBLISH_DIR)\*.nupkg"
+else
+	SHELL := /bin/bash
+	POWERSHELL := pwsh
+	MD = mkdir -p $(PUBLISH_DIR)
+	RM = rm -rf $(PUBLISH_DIR)
+	LS = ls $(PUBLISH_DIR)/*.nupkg 1> /dev/null 2>&1
+endif
+
+# -----------------------------------------------------------------------------
 # Phony Targets (Targets that don't represent files)
 # -----------------------------------------------------------------------------
-.PHONY: all Default Clean Restore Build Test Pack Publish Push help
+.PHONY: all Default Clean Restore Build Test Pack Push help
 
 # -----------------------------------------------------------------------------
 # Default Target
 # -----------------------------------------------------------------------------
 # The first target is the default if none is specified on the command line.
 # Maps to Cake's "Default" task which depends on "Publish".
-Default: Publish
+Default: Pack
 
 all: Default # Common alias for the main default action
 
@@ -89,32 +106,21 @@ Test: Build
 # Depends on Build
 Pack: Build
 	@echo "--- Packing NuGet Packages (Version: $(VERSION)) ---"
-	# Ensure publish dir exists for output
-	mkdir -p $(PUBLISH_DIR)
+	$(DOTNET) --version > /dev/null 2>&1 && (mkdir -p $(PUBLISH_DIR)) || (powershell -Command "if (!(Test-Path '$(PUBLISH_DIR)')) { New-Item -ItemType Directory -Path '$(PUBLISH_DIR)' | Out-Null }")
 	$(DOTNET) pack $(SOLUTION) --configuration $(CONFIGURATION) --no-build --no-restore -o $(PUBLISH_DIR) /p:PackageVersion=$(VERSION) /p:Version=$(VERSION)
 	@echo "Packaging complete. Packages in $(PUBLISH_DIR)"
-
-# Publish the application
-# Depends on Test (ensures tests pass before publishing)
-# Might also depend on Pack if publish consumes packed artifacts, but typically depends on Build/Test.
-Publish: Test
-	@echo "--- Publishing Application (Version: $(VERSION)) ---"
-	# Ensure publish app dir exists
-	mkdir -p $(PUBLISH_APP_DIR)
-	$(DOTNET) publish $(PROJECT_TO_PUBLISH) --configuration $(CONFIGURATION) --no-build --no-restore -o $(PUBLISH_APP_DIR) /p:Version=$(VERSION)
-	@echo "Publish complete. Application in $(PUBLISH_APP_DIR)"
 
 # Push NuGet packages to the source
 # Depends on Pack
 Push: Pack
 	@echo "--- Pushing NuGet Packages ---"
-	# Check if NUGET_API_KEY is set (Makefile equivalent of .WithCriteria)
-	$(if $(NUGET_API_KEY), \
-		find $(PUBLISH_DIR) -name "*.nupkg" -exec $(DOTNET) nuget push {} --api-key $(NUGET_API_KEY) --source $(NUGET_SOURCE) \; , \
-		@echo "NUGET_API_KEY not set. Skipping push. Set it via environment or 'make Push NUGET_API_KEY=your_key'" \
-	)
+ifeq ($(OS),Windows_NT)
+	$(DOTNET) nuget push "$(PUBLISH_DIR)\*.nupkg" --source $(NUGET_SOURCE) --api-key $(NUGET_API_KEY);
+else
+	$(DOTNET) nuget push $(PUBLISH_DIR)/*.nupkg --source $(NUGET_SOURCE) --api-key $(NUGET_API_KEY);
+endif
 	@echo "Push attempt finished."
-
+	
 
 # -----------------------------------------------------------------------------
 # Help Target
@@ -129,7 +135,6 @@ help:
 	@echo "  Build        Build the solution"
 	@echo "  Test         Run unit tests"
 	@echo "  Pack         Create NuGet packages"
-	@echo "  Publish      Publish the application"
 	@echo "  Push         Push NuGet packages to the source (requires NUGET_API_KEY)"
 	@echo ""
 	@echo "Variables:"
