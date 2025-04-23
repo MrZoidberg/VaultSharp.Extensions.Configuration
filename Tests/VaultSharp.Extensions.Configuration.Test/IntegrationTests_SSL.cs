@@ -32,8 +32,8 @@ public partial class IntegrationTests
   
         try
         {
-            await container.StartAsync().ConfigureAwait(false);
-            await this.LoadDataAsync("https://localhost:8200", values).ConfigureAwait(false);
+            await container.StartAsync();
+            await this.LoadDataAsync("https://localhost:8200", values);
 
             // act
             var builder = new ConfigurationBuilder();
@@ -49,7 +49,7 @@ public partial class IntegrationTests
         }
         finally
         {
-            await container.DisposeAsync().ConfigureAwait(false);
+            await container.DisposeAsync();
         }
     }
 
@@ -72,8 +72,8 @@ public partial class IntegrationTests
 
         try
         {
-            await container.StartAsync().ConfigureAwait(false);
-            await this.LoadDataAsync("https://localhost:8200", values).ConfigureAwait(false);
+            await container.StartAsync();
+            await this.LoadDataAsync("https://localhost:8200", values);
 
             // act
             var builder = new ConfigurationBuilder();
@@ -90,7 +90,7 @@ public partial class IntegrationTests
         }
         finally
         {
-            await container.DisposeAsync().ConfigureAwait(false);
+            await container.DisposeAsync();
         }
     }
 
@@ -113,8 +113,8 @@ public partial class IntegrationTests
 
         try
         {
-            await container.StartAsync().ConfigureAwait(false);
-            await this.LoadDataAsync("https://localhost:8200", values).ConfigureAwait(false);
+            await container.StartAsync();
+            await this.LoadDataAsync("https://localhost:8200", values);
 
             // act
             var builder = new ConfigurationBuilder();
@@ -130,7 +130,7 @@ public partial class IntegrationTests
         }
         finally
         {
-            await container.DisposeAsync().ConfigureAwait(false);
+            await container.DisposeAsync();
         }
     }
 }
