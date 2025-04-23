@@ -10,7 +10,7 @@
     <TargetFrameworks>net6.0;net7.0;net8.0;netstandard2.0;netstandard2.1</TargetFrameworks>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    <Copyright>Copyright 2024 © Mikhail Merkulov. All rights Reserved</Copyright>
+    <Copyright>Copyright 2025 © Mykhaylo Merkulov. All rights Reserved</Copyright>
   </PropertyGroup>
 
   <PropertyGroup Label="Package">
@@ -35,6 +35,10 @@
     <PackageReference Include="GitVersion.MsBuild" Version="6.2.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="coverlet.msbuild" Version="6.0.4">
+       <PrivateAssets>all</PrivateAssets>
+       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
   </ItemGroup>
 

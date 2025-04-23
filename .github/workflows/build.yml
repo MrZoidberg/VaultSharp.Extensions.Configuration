@@ -23,7 +23,7 @@ jobs:
         fetch-depth: 0
     - name: 'Git Fetch Tags'
       run: git fetch --tags
-      shell: pwsh
+      shell: bash
     - name: 'Install .NET Core SDK'
       uses: actions/setup-dotnet@v4
       with:
@@ -34,15 +34,12 @@ jobs:
     - name: 'Fix permissions'
       run: chmod +x ./Tests/VaultSharp.Extensions.Configuration.Test/approle.sh && chmod +x ./Tests/VaultSharp.Extensions.Configuration.Test/approle_nolist.sh
       shell: bash
-    - name: 'Dotnet Tool Restore'
-      run: dotnet tool restore
-      shell: pwsh
-    - name: 'Dotnet Cake Build'
-      run: dotnet cake --target=Build
-      shell: pwsh
-    - name: 'Dotnet Cake Test'
-      run: dotnet cake --target=Test
-      shell: pwsh    
+    - name: Test      
+      run: make Test
+      shell: bash
+    - name: 'Pack'
+      run: make Pack
+      shell: bash    
     - name: Copy Coverage To Predictable Location
       if: github.event_name == 'pull_request'
       run: cp coverage/*/coverage.cobertura.xml coverage/coverage.cobertura.xml
@@ -74,6 +71,6 @@ jobs:
       with:
         recreate: true
         path: code-coverage-results.md
-    - name: 'Dotnet Cake Pack'
-      run: dotnet cake --target=Pack
-      shell: pwsh
+    - name: 'Pack'
+      run: make Pack
+      shell: bash    
