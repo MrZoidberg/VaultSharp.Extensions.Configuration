@@ -31,6 +31,7 @@ jobs:
           6.0.x
           7.0.x
           8.0.x
+          9.0.x
     - name: 'Fix permissions'
       run: chmod +x ./Tests/VaultSharp.Extensions.Configuration.Test/approle.sh && chmod +x ./Tests/VaultSharp.Extensions.Configuration.Test/approle_nolist.sh
       shell: bash

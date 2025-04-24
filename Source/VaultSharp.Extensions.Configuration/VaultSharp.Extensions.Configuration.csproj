@@ -7,7 +7,7 @@
     <PackageId>VaultSharp.Extensions.Configuration</PackageId>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <Nullable>enable</Nullable>
-    <TargetFrameworks>net6.0;net7.0;net8.0;netstandard2.0;netstandard2.1</TargetFrameworks>
+    <TargetFrameworks>net6.0;net7.0;net8.0;net9.0;netstandard2.0;netstandard2.1</TargetFrameworks>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <Copyright>Copyright 2025 © Mykhaylo Merkulov. All rights Reserved</Copyright>
@@ -17,7 +17,7 @@
     <Product>VaultSharp.Extensions.Configuration</Product>
     <Description>
       Configuration extension that allows you to use Hashicorp Vault as a configuration backend.
-      This library is built with .NET Standard 2.0, 2.1, .NET 6, .NET 7, .NET 8
+      This library is built with .NET Standard 2.0, 2.1, .NET 6, .NET 7, .NET 8, .NET 9
     </Description>
     <PackageTags>Vault;Configuration;Data protection;Hashicorp</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
@@ -105,6 +105,17 @@
     </PackageReference>
   </ItemGroup>
 
+  <ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
+    <PackageReference Include="System.Text.Json" Version="9.0.4" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.4" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="9.0.4" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.4" />
+    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="9.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
   <PropertyGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
     <AssemblyTitle>VaultSharp configuration extensions .NET Standard 2.0</AssemblyTitle>
   </PropertyGroup>
@@ -123,6 +134,10 @@
 
   <PropertyGroup Condition="'$(TargetFramework)'=='net8.0'">
     <AssemblyTitle>VaultSharp configuration extensions .NET 8</AssemblyTitle>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)'=='net9.0'">
+    <AssemblyTitle>VaultSharp configuration extensions .NET 9</AssemblyTitle>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net6.0|AnyCPU'">
