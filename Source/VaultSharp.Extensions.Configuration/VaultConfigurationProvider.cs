@@ -81,7 +81,7 @@ namespace VaultSharp.Extensions.Configuration
                             {
                                 if (this.ConfigurationSource.Options.AcceptInsecureConnection)
                                 {
-#if NETSTANDARD2_0                                    
+#if NETSTANDARD2_0
                                     clientHandler.ServerCertificateCustomValidationCallback = (message, cert, chain, sslPolicyErrors) => true;
 #else
                                     clientHandler.ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
@@ -119,7 +119,7 @@ namespace VaultSharp.Extensions.Configuration
 
         /// <summary>
         /// This will fetch the vault token again before the new operation.
-        /// Use IConfiguration object: configurationRoot.Providers.OfType&lt;VaultConfigurationProvider&lt;().FirstOrDefault().ResetToken(); 
+        /// Use IConfiguration object: configurationRoot.Providers.OfType&lt;VaultConfigurationProvider&lt;().FirstOrDefault().ResetToken();
         /// See https://github.com/rajanadar/VaultSharp/blob/34ab400c2a295f4a81d97fc5d65f38509c7e0f05/README.md?plain=1#L92
         /// </summary>
         public void ResetToken() => this.vaultClient?.V1.Auth.ResetVaultToken();
@@ -146,7 +146,7 @@ namespace VaultSharp.Extensions.Configuration
                     {
                         key = this.ConfigurationSource.Options.KeyPrefix + ":" + key;
                     }
-                    
+
                 }
                 var data = secretData.SecretData.Data;
 
@@ -292,16 +292,16 @@ namespace VaultSharp.Extensions.Configuration
 
         private string ReplaceTheAdditionalCharactersForConfigurationPath(string inputKey)
         {
-            if (!this.ConfigurationSource.Options.AdditionalCharactersForConfigurationPath.Any())
+            if (!this.ConfigurationSource.Options.AdditionalStringsForConfigurationPath.Any())
             {
                 return inputKey;
             }
 
             var outputKey = new StringBuilder(inputKey);
 
-            foreach (var c in this.ConfigurationSource.Options.AdditionalCharactersForConfigurationPath)
+            foreach (var c in this.ConfigurationSource.Options.AdditionalStringsForConfigurationPath)
             {
-                outputKey.Replace(c, ':');
+                outputKey.Replace(c, ":");
             }
 
             return outputKey.ToString();

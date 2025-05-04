@@ -168,7 +168,7 @@ namespace VaultSharp.Extensions.Configuration.Test
                 configurationRoot.GetValue<int>("option3").Should().Be(5);
                 configurationRoot.GetValue<bool>("option4").Should().Be(true);
                 configurationRoot.GetValue<string>("option5:0").Should().Be("v1");
-                configurationRoot.GetValue<string>("option5:1").Should().Be("v2"); 
+                configurationRoot.GetValue<string>("option5:1").Should().Be("v2");
                 configurationRoot.GetValue<string>("option5:2").Should().Be("v3");
                 var t1 = new TestConfigObject();
                 configurationRoot.Bind("option6:0", t1);
@@ -229,6 +229,12 @@ namespace VaultSharp.Extensions.Configuration.Test
                         }
                     },
                     {
+                        "test/otherSubsection__otherSubsection2/otherSubsection3__otherSubsection4__otherSubsection6", new[]
+                        {
+                            new KeyValuePair<string, object>("option9", "value9"),
+                        }
+                    },
+                    {
                         "test/subsection/testsection", new[]
                         {
                             new KeyValuePair<string, object>("option8", "value8"),
@@ -247,7 +253,7 @@ namespace VaultSharp.Extensions.Configuration.Test
 
                 var keyPrefix = "MyConfig";
                 builder.AddVaultConfiguration(
-                    () => new VaultOptions("http://localhost:8200", "root", additionalCharactersForConfigurationPath: new[] { '.' }, keyPrefix: keyPrefix),
+                    () => new VaultOptions("http://localhost:8200", "root", additionalCharactersForConfigurationPath: new[] { '.' }, additionalStringsForConfigurationPath: ["__"], keyPrefix: keyPrefix),
                     "test",
                     "secret",
                     this.logger);
@@ -258,7 +264,7 @@ namespace VaultSharp.Extensions.Configuration.Test
                 configurationRoot.GetValue<int>($"{keyPrefix}:option3").Should().Be(5);
                 configurationRoot.GetValue<bool>($"{keyPrefix}:option4").Should().Be(true);
                 configurationRoot.GetValue<string>($"{keyPrefix}:option5:0").Should().Be("v1");
-                configurationRoot.GetValue<string>($"{keyPrefix}:option5:1").Should().Be("v2"); 
+                configurationRoot.GetValue<string>($"{keyPrefix}:option5:1").Should().Be("v2");
                 configurationRoot.GetValue<string>($"{keyPrefix}:option5:2").Should().Be("v3");
                 var t1 = new TestConfigObject();
                 configurationRoot.Bind($"{keyPrefix}:option6:0", t1);
@@ -270,11 +276,17 @@ namespace VaultSharp.Extensions.Configuration.Test
                 t2.OptionB.Should().Be("b2");
                 configurationRoot.GetSection($"{keyPrefix}:subsection").GetValue<string>("option2").Should().Be("value2");
                 configurationRoot.GetSection($"{keyPrefix}:otherSubsection")
-                    .GetSection($"otherSubsection2")
+                    .GetSection("otherSubsection2")
                     .GetSection("otherSubsection3")
                     .GetSection("otherSubsection4")
                     .GetSection("otherSubsection5")
                     .GetValue<string>("option7").Should().Be("value7");
+                configurationRoot.GetSection($"{keyPrefix}:otherSubsection")
+                    .GetSection("otherSubsection2")
+                    .GetSection("otherSubsection3")
+                    .GetSection("otherSubsection4")
+                    .GetSection("otherSubsection6")
+                    .GetValue<string>("option9").Should().Be("value9");
                 configurationRoot.GetSection($"{keyPrefix}:subsection").GetSection("testsection").GetValue<string>("option8").Should().Be("value8");
             }
             finally
@@ -754,7 +766,7 @@ namespace VaultSharp.Extensions.Configuration.Test
                 Action act = () => builder.Build();
                 act.Should().Throw<VaultApiException>().And.HttpStatusCode.Should().Be(HttpStatusCode.Forbidden);
 
-            }           
+            }
             finally
             {
                 await cts.CancelAsync();
