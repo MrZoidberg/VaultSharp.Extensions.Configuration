@@ -54,7 +54,9 @@ namespace VaultSharp.Extensions.Configuration
             this.ReloadCheckIntervalSeconds = reloadCheckIntervalSeconds;
             this.OmitVaultKeyName = omitVaultKeyName;
             this.KeyPrefix = keyPrefix;
+#pragma warning disable CS0618 // Type or member is obsolete
             this.AdditionalCharactersForConfigurationPath = additionalCharactersForConfigurationPath ?? Array.Empty<char>();
+#pragma warning restore CS0618 // Type or member is obsolete
             this.AdditionalStringsForConfigurationPath = [..additionalStringsForConfigurationPath ?? [], ..(additionalCharactersForConfigurationPath ?? []).Select(x => x.ToString())];
             this.Namespace = @namespace;
             this.AlwaysAddTrailingSlashToBasePath = alwaysAddTrailingSlashToBasePath;
@@ -94,7 +96,9 @@ namespace VaultSharp.Extensions.Configuration
             this.ReloadOnChange = reloadOnChange;
             this.ReloadCheckIntervalSeconds = reloadCheckIntervalSeconds;
             this.OmitVaultKeyName = omitVaultKeyName;
+#pragma warning disable CS0618 // Type or member is obsolete
             this.AdditionalCharactersForConfigurationPath = additionalCharactersForConfigurationPath ?? Array.Empty<char>();
+#pragma warning restore CS0618 // Type or member is obsolete
             this.AdditionalStringsForConfigurationPath = [..additionalStringsForConfigurationPath ?? [], ..(additionalCharactersForConfigurationPath ?? []).Select(x => x.ToString())];
             this.Namespace = @namespace;
             this.AlwaysAddTrailingSlashToBasePath = alwaysAddTrailingSlashToBasePath;
@@ -152,6 +156,7 @@ namespace VaultSharp.Extensions.Configuration
         /// Gets an array of characters that will be used as a path to form the Configuration.
         /// This may not be equal to <see cref="AdditionalStringsForConfigurationPath"/>.
         /// </summary>
+        [Obsolete($"Please use ${nameof(AdditionalStringsForConfigurationPath)}. This property will be removed in a future release.")]
         public IEnumerable<char> AdditionalCharactersForConfigurationPath { get; }
 
         /// <summary>
