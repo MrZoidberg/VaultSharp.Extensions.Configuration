@@ -72,6 +72,7 @@ namespace VaultSharp.Extensions.Configuration
         /// <param name="reloadOnChange">Reload secrets if changed in Vault.</param>
         /// <param name="reloadCheckIntervalSeconds">Interval in seconds to check Vault for any changes.</param>
         /// <param name="omitVaultKeyName">Omit Vault Key Name in Configuration Keys.</param>
+        /// <param name="keyPrefix">Store all Vault keys under this prefix </param>
         /// <param name="additionalCharactersForConfigurationPath">Additional characters for the Configuration path.</param>
         /// <param name="additionalStringsForConfigurationPath">Additional strings for the Configuration path.</param>
         /// <param name="namespace">Vault namespace.</param>
@@ -84,6 +85,7 @@ namespace VaultSharp.Extensions.Configuration
             bool reloadOnChange = false,
             int reloadCheckIntervalSeconds = 300,
             bool omitVaultKeyName = false,
+            string? keyPrefix = null,
             IEnumerable<char>? additionalCharactersForConfigurationPath = null,
             IEnumerable<string>? additionalStringsForConfigurationPath = null,
             string? @namespace = null,
@@ -96,6 +98,7 @@ namespace VaultSharp.Extensions.Configuration
             this.ReloadOnChange = reloadOnChange;
             this.ReloadCheckIntervalSeconds = reloadCheckIntervalSeconds;
             this.OmitVaultKeyName = omitVaultKeyName;
+            this.KeyPrefix = keyPrefix;
 #pragma warning disable CS0618 // Type or member is obsolete
             this.AdditionalCharactersForConfigurationPath = additionalCharactersForConfigurationPath ?? Array.Empty<char>();
 #pragma warning restore CS0618 // Type or member is obsolete

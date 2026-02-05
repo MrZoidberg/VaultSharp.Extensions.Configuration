@@ -295,6 +295,79 @@ namespace VaultSharp.Extensions.Configuration.Test
             }
         }
 
+        [Fact]
+        public async Task Success_WatcherTestWithPrefix_AuthMethod_TokenAuth()
+        {
+            // arrange
+            using var cts = new CancellationTokenSource();
+
+            var values =
+                new Dictionary<string, IEnumerable<KeyValuePair<string, object>>>
+                {
+            { "test", new[] { new KeyValuePair<string, object>("option1", "value1") } },
+            { "test/subsection", new[] { new KeyValuePair<string, object>("option2", "value2") } },
+                };
+
+            var container = this.PrepareVaultContainer();
+            try
+            {
+                await container.StartAsync();
+                await this.LoadDataAsync("http://localhost:8200", values);
+
+                var testPrefix = "MyConfig";
+
+                // act
+                var builder = new ConfigurationBuilder();
+                builder.AddVaultConfiguration(
+                    () => new VaultOptions(
+                        "http://localhost:8200",
+                        new TokenAuthMethodInfo("root"),
+                        reloadOnChange: true,
+                        reloadCheckIntervalSeconds: 10,
+                        keyPrefix: testPrefix),
+                    "test",
+                    "secret",
+                    this.logger);
+
+                var configurationRoot = builder.Build();
+
+                var changeWatcher = new VaultChangeWatcher(configurationRoot, this.logger);
+                await changeWatcher.StartAsync(cts.Token);
+
+                var reloadToken = configurationRoot.GetReloadToken();
+
+                // assert
+                configurationRoot.GetValue<string>($"{testPrefix}:option1").Should().Be("value1");
+                configurationRoot.GetSection($"{testPrefix}:subsection").GetValue<string>("option2").Should().Be("value2");
+                reloadToken.HasChanged.Should().BeFalse();
+
+                // load new data and wait for reload
+                values = new Dictionary<string, IEnumerable<KeyValuePair<string, object>>>
+        {
+            { "test", new[] { new KeyValuePair<string, object>("option1", "value1_new") } },
+            { "test/subsection", new[] { new KeyValuePair<string, object>("option2", "value2_new") } },
+            { "test/subsection3", new[] { new KeyValuePair<string, object>("option3", "value3_new") } },
+            { "test/testsection", new[] { new KeyValuePair<string, object>("option4", "value4_new") } },
+        };
+
+                await this.LoadDataAsync("http://localhost:8200", values);
+                await Task.Delay(TimeSpan.FromSeconds(15), cts.Token).ConfigureAwait(true);
+
+                reloadToken.HasChanged.Should().BeTrue();
+                configurationRoot.GetValue<string>($"{testPrefix}:option1").Should().Be("value1_new");
+                configurationRoot.GetSection($"{testPrefix}:subsection").GetValue<string>("option2").Should().Be("value2_new");
+                configurationRoot.GetSection($"{testPrefix}:subsection3").GetValue<string>("option3").Should().Be("value3_new");
+                configurationRoot.GetSection($"{testPrefix}:testsection").GetValue<string>("option4").Should().Be("value4_new");
+
+                changeWatcher.Dispose();
+            }
+            finally
+            {
+                await cts.CancelAsync();
+                await container.DisposeAsync();
+            }
+        }
+
 
         [Fact]
         public async Task Success_SimpleTestOmitVaultKey_TokenAuth()
