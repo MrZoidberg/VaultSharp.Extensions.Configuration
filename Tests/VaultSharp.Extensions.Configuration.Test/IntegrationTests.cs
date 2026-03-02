@@ -193,6 +193,47 @@ namespace VaultSharp.Extensions.Configuration.Test
             }
         }
 
+        [Fact]
+        public async Task Success_NullValue_TokenAuth()
+        {
+            // arrange
+            var values =
+                new Dictionary<string, IEnumerable<KeyValuePair<string, object>>>
+                {
+                    {
+                        "test", new[]
+                        {
+                            new KeyValuePair<string, object>("option1", "value1"),
+                            new KeyValuePair<string, object>("nullOption", null!),
+                        }
+                    },
+                };
+
+            var container = this.PrepareVaultContainer();
+            try
+            {
+                await container.StartAsync();
+                await this.LoadDataAsync("http://localhost:8200", values);
+
+                // act
+                var builder = new ConfigurationBuilder();
+                builder.AddVaultConfiguration(
+                    () => new VaultOptions("http://localhost:8200", "root"),
+                    "test",
+                    "secret",
+                    this.logger);
+                var configurationRoot = builder.Build();
+
+                // assert
+                configurationRoot.GetValue<string>("option1").Should().Be("value1");
+                configurationRoot.GetValue<string>("nullOption").Should().BeNull();
+            }
+            finally
+            {
+                await container.DisposeAsync();
+            }
+        }
+
          [Fact]
         public async Task Success_SimpleTestWithKeyPrefix_TokenAuth()
         {
