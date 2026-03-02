@@ -176,7 +176,17 @@ namespace VaultSharp.Extensions.Configuration
                 var nestedKey = string.IsNullOrEmpty(key) ? pair.Key : $"{key}:{pair.Key}";
                 nestedKey = this.ReplaceTheAdditionalCharactersForConfigurationPath(nestedKey);
 
-                var nestedValue = (JsonElement)(object)pair.Value!;
+                JsonElement nestedValue;
+                if (pair.Value == null)
+                {
+                    using var doc = JsonDocument.Parse("null");
+                    nestedValue = doc.RootElement.Clone();
+                }
+                else
+                {
+                    nestedValue = (JsonElement)(object)pair.Value!;
+                }
+                
                 this.SetItemData(nestedKey, nestedValue);
             }
         }
