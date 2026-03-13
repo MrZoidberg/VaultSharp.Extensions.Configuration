@@ -171,6 +171,7 @@ namespace VaultSharp.Extensions.Configuration
 
         private void SetData<TValue>(IEnumerable<KeyValuePair<string, TValue>> data, string? key)
         {
+            base.Data.Clear();
             foreach (var pair in data)
             {
                 var nestedKey = string.IsNullOrEmpty(key) ? pair.Key : $"{key}:{pair.Key}";
