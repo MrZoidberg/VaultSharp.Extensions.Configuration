@@ -27,6 +27,10 @@ namespace VaultSharp.Extensions.Configuration
         private IVaultClient? vaultClient;
         private readonly Dictionary<string, int> versionsCache;
 
+#if DEBUG
+        public Dictionary<string, int> VersionsCache_TEST => this.versionsCache;
+#endif
+
         /// <summary>
         /// Initializes a new instance of the <see cref="VaultConfigurationProvider"/> class.
         /// </summary>

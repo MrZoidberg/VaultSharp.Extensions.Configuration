@@ -3,7 +3,7 @@
   <PropertyGroup Label="Build">
     <LangVersion>default</LangVersion>
     <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
-    <NoWarn>SA1633;SA1028;SA1309;CA1303;CS1591;IDE0057</NoWarn>
+    <NoWarn>SA1633;SA1028;SA1309;CA1303;CS1591;IDE0057;IDE0032</NoWarn>
     <PackageId>VaultSharp.Extensions.Configuration</PackageId>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <Nullable>enable</Nullable>
