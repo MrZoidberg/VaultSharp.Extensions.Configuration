@@ -127,6 +127,9 @@ namespace VaultSharp.Extensions.Configuration
         private async Task<bool> LoadVaultDataAsync(IVaultClient vaultClient)
         {
             var hasChanges = false;
+            var currentKeys = new HashSet<string>();
+            var keysToUpdate = new Dictionary<string, (object Data, int Version)>();
+            
             await foreach (var secretData in this.ReadKeysAsync(vaultClient, this.ConfigurationSource.BasePath))
             {
                 this.logger?.LogDebug($"VaultConfigurationProvider: got Vault data with key `{secretData.Key}`");
@@ -146,8 +149,9 @@ namespace VaultSharp.Extensions.Configuration
                     {
                         key = this.ConfigurationSource.Options.KeyPrefix + ":" + key;
                     }
-
                 }
+                
+                currentKeys.Add(key);
                 var data = secretData.SecretData.Data;
 
                 var shouldSetValue = true;
@@ -160,9 +164,26 @@ namespace VaultSharp.Extensions.Configuration
 
                 if (shouldSetValue)
                 {
-                    this.SetData(data, this.ConfigurationSource.Options.OmitVaultKeyName ? string.Empty : key);
-                    hasChanges = true;
-                    this.versionsCache[key] = secretData.SecretData.Metadata.Version;
+                    keysToUpdate[key] = (data, secretData.SecretData.Metadata.Version);
+                }
+            }
+
+            var keysToRemove = this.versionsCache.Keys.Where(k => !currentKeys.Contains(k)).ToList();
+            if (keysToUpdate.Count > 0 || keysToRemove.Count > 0)
+            {
+                this.Data.Clear();
+                hasChanges = true;
+                
+                foreach (var kvp in keysToUpdate)
+                {
+                    this.SetData((IDictionary<string, object>)kvp.Value.Data, this.ConfigurationSource.Options.OmitVaultKeyName ? string.Empty : kvp.Key);
+                    this.versionsCache[kvp.Key] = kvp.Value.Version;
+                }
+                
+                foreach (var removedKey in keysToRemove)
+                {
+                    this.versionsCache.Remove(removedKey);
+                    this.logger?.LogDebug($"VaultConfigurationProvider: key `{removedKey}` was removed from Vault");
                 }
             }
 
