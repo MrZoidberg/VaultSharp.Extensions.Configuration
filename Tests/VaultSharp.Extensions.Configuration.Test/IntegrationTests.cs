@@ -6,6 +6,7 @@ namespace VaultSharp.Extensions.Configuration.Test
     using System.Linq;
     using System.Net;
     using System.Net.Http;
+    using System.Reflection;
     using System.Threading;
     using System.Threading.Tasks;
     using DotNet.Testcontainers.Builders;
@@ -1031,7 +1032,9 @@ namespace VaultSharp.Extensions.Configuration.Test
 
                 var provider = configurationRoot.Providers.OfType<VaultConfigurationProvider>().First();
 
-                provider.VersionsCache_TEST.Should().ContainKey("subsection");
+                var versionsCacheField = typeof(VaultConfigurationProvider)
+                    .GetField("versionsCache", BindingFlags.NonPublic | BindingFlags.Instance);
+                var versionsCache = (Dictionary<string, int>)versionsCacheField!.GetValue(provider)!;
 
                 // delete test/subsection from Vault
                 var vaultClientSettings = new VaultClientSettings("http://localhost:8200", new TokenAuthMethodInfo("root"))
@@ -1045,7 +1048,7 @@ namespace VaultSharp.Extensions.Configuration.Test
                 provider.Load();
 
                 // assert the deleted key is removed from versionsCache
-                provider.VersionsCache_TEST.Should().NotContainKey("subsection");
+                versionsCache.Should().NotContainKey("subsection");
 
                 // assert the deleted key's value is no longer present in configuration
                 configurationRoot.GetSection("subsection").GetValue<string>("option2").Should().BeNull();
