@@ -19,12 +19,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
       with:
         lfs: true
         fetch-depth: 0
     - name: 'Install .NET Core SDK'
-      uses: actions/setup-dotnet@v4
+      uses: actions/setup-dotnet@v6
       with:
         dotnet-version: |
           6.0.x
@@ -50,7 +50,7 @@ jobs:
         echo "COVERAGE=$COVERAGE%" >> $GITHUB_ENV
         echo "BRANCH=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_ENV
     - name: Create the Badgegg
-      uses: schneegans/dynamic-badges-action@v1.7.0
+      uses: schneegans/dynamic-badges-action@v1.9.0
       with:
         auth: ${{ secrets.GIST_SECRET }}
         gistID: 5242a4e2d58a428062b3a59824d5864e

@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
       with:
         lfs: true
         fetch-depth: 0
@@ -19,7 +19,7 @@ jobs:
       run: git fetch --tags
       shell: pwsh
     - name: 'Install .NET Core SDK'
-      uses: actions/setup-dotnet@v4
+      uses: actions/setup-dotnet@v6
       with:
         dotnet-version: |
           6.0.x
@@ -35,12 +35,12 @@ jobs:
         NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
       shell: pwsh
     - name: 'Publish Code Coverage'
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: tests
         path: './Artefacts/**/coverage.opencover.xml'
     - name: 'Publish Test Results'
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: tests
         path: './Artefacts/VaultSharp.Extensions.Configuration.Test.html'

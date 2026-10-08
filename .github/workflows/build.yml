@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
       with:
         lfs: true
         fetch-depth: 0
@@ -25,7 +25,7 @@ jobs:
       run: git fetch --tags
       shell: bash
     - name: 'Install .NET Core SDK'
-      uses: actions/setup-dotnet@v4
+      uses: actions/setup-dotnet@v6
       with:
         dotnet-version: |
           6.0.x
@@ -45,12 +45,12 @@ jobs:
       if: github.event_name == 'pull_request'
       run: cp coverage/*/coverage.cobertura.xml coverage/coverage.cobertura.xml
     - name: 'Publish Code Coverage'
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: Coverage Cobertura Report
         path: './coverage/coverage.cobertura.xml'
     - name: 'Publish Test Results'
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: Tests HTML Report
         path: './coverage/VaultSharp.Extensions.Configuration.Test.html'
@@ -67,7 +67,7 @@ jobs:
         indicators: true
         output: both
     - name: Add Coverage PR Comment
-      uses: marocchino/sticky-pull-request-comment@v2
+      uses: marocchino/sticky-pull-request-comment@v3
       if: github.event_name == 'pull_request'
       with:
         recreate: true
