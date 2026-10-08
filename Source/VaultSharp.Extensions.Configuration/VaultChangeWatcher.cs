@@ -39,6 +39,11 @@ namespace VaultSharp.Extensions.Configuration
         /// <inheritdoc />
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
+            if (!this._configProviders.Any())
+            {
+                return;
+            }
+
             var timers = new Dictionary<int, int>(); // key - index of config provider, value - timer
             var minTime = int.MaxValue;
             var i = 0;
