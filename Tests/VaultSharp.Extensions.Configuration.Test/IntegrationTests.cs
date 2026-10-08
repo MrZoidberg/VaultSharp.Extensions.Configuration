@@ -971,8 +971,8 @@ namespace VaultSharp.Extensions.Configuration.Test
             var container = this.PrepareVaultContainer(tokenId: "");
             try
             {
-                await container.StartAsync(cts.Token).ConfigureAwait(false);
-                await this.LoadDataAsync("http://localhost:8200", values).ConfigureAwait(false);
+                await container.StartAsync(cts.Token);
+                await this.LoadDataAsync("http://localhost:8200", values);
 
                 // Moq mock of PostProcessHttpClientHandlerAction implementation:
                 var mockConfigureProxyAction = new Mock<Action<HttpMessageHandler>>();
@@ -998,7 +998,7 @@ namespace VaultSharp.Extensions.Configuration.Test
             finally
             {
                 cts.Cancel();
-                await container.DisposeAsync().ConfigureAwait(false);
+                await container.DisposeAsync();
             }
         }
 
