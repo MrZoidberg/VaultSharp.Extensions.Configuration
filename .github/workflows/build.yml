@@ -3,6 +3,10 @@ name: Build
 on:
   pull_request:
 
+permissions:
+  contents: read
+  pull-requests: write
+
 env:
   # Set the DOTNET_SKIP_FIRST_TIME_EXPERIENCE environment variable to stop wasting time caching packages
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
