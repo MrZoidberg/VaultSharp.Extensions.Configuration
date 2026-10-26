@@ -26,6 +26,7 @@ namespace VaultSharp.Extensions.Configuration
         private readonly ILogger? logger;
         private IVaultClient? vaultClient;
         private readonly Dictionary<string, int> versionsCache;
+        private readonly Dictionary<string, IDictionary<string, object>> dataCache;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="VaultConfigurationProvider"/> class.
@@ -37,6 +38,7 @@ namespace VaultSharp.Extensions.Configuration
             this.logger = logger;
             this.ConfigurationSource = source ?? throw new ArgumentNullException(nameof(source));
             this.versionsCache = new Dictionary<string, int>();
+            this.dataCache = new Dictionary<string, IDictionary<string, object>>();
         }
 
         /// <summary>
@@ -127,7 +129,7 @@ namespace VaultSharp.Extensions.Configuration
         private async Task<bool> LoadVaultDataAsync(IVaultClient vaultClient)
         {
             var hasChanges = false;
-            var currentKeys = new HashSet<string>();
+            var currentKeys = new List<string>();
             var keysToUpdate = new Dictionary<string, (object Data, int Version)>();
             
             await foreach (var secretData in this.ReadKeysAsync(vaultClient, this.ConfigurationSource.BasePath))
@@ -176,14 +178,22 @@ namespace VaultSharp.Extensions.Configuration
                 
                 foreach (var kvp in keysToUpdate)
                 {
-                    this.SetData((IDictionary<string, object>)kvp.Value.Data, this.ConfigurationSource.Options.OmitVaultKeyName ? string.Empty : kvp.Key);
+                    this.dataCache[kvp.Key] = (IDictionary<string, object>)kvp.Value.Data;
                     this.versionsCache[kvp.Key] = kvp.Value.Version;
                 }
                 
                 foreach (var removedKey in keysToRemove)
                 {
                     this.versionsCache.Remove(removedKey);
+                    this.dataCache.Remove(removedKey);
                     this.logger?.LogDebug($"VaultConfigurationProvider: key `{removedKey}` was removed from Vault");
+                }
+
+                // Data was cleared, so refill it from every secret that still exists, not only the changed ones.
+                // Vault read order is kept, so overlapping keys resolve the same way as on the first load.
+                foreach (var key in currentKeys)
+                {
+                    this.SetData(this.dataCache[key], this.ConfigurationSource.Options.OmitVaultKeyName ? string.Empty : key);
                 }
             }
 
