@@ -1058,6 +1058,57 @@ namespace VaultSharp.Extensions.Configuration.Test
                 await container.DisposeAsync();
             }
         }
+
+        [Fact]
+        public async Task Success_UnchangedSecretsKeptAfterReload()
+        {
+            // arrange
+            var values = new Dictionary<string, IEnumerable<KeyValuePair<string, object>>>
+            {
+                { "test", new[] { new KeyValuePair<string, object>("option1", "value1") } },
+                { "test/subsection", new[] { new KeyValuePair<string, object>("option2", "value2") } },
+            };
+
+            var container = this.PrepareVaultContainer();
+            try
+            {
+                await container.StartAsync();
+                await this.LoadDataAsync("http://localhost:8200", values);
+
+                var builder = new ConfigurationBuilder();
+                builder.AddVaultConfiguration(
+                    () => new VaultOptions("http://localhost:8200", "root"),
+                    "test",
+                    "secret",
+                    this.logger);
+                var configurationRoot = builder.Build();
+                var provider = configurationRoot.Providers.OfType<VaultConfigurationProvider>().First();
+
+                // change only test/subsection
+                await this.LoadDataAsync(
+                    "http://localhost:8200",
+                    new Dictionary<string, IEnumerable<KeyValuePair<string, object>>>
+                    {
+                        { "test/subsection", new[] { new KeyValuePair<string, object>("option2", "value2-changed") } },
+                    });
+
+                // act
+                provider.Load();
+
+                // assert the unchanged secret is still there and the changed one is updated
+                configurationRoot.GetValue<string>("option1").Should().Be("value1");
+                configurationRoot.GetSection("subsection").GetValue<string>("option2").Should().Be("value2-changed");
+
+                // a reload without changes must not lose anything either
+                provider.Load();
+                configurationRoot.GetValue<string>("option1").Should().Be("value1");
+                configurationRoot.GetSection("subsection").GetValue<string>("option2").Should().Be("value2-changed");
+            }
+            finally
+            {
+                await container.DisposeAsync();
+            }
+        }
     }
 
     public class TestConfigObject
