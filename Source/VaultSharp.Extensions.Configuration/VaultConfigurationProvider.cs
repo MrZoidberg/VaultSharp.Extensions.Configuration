@@ -170,7 +170,7 @@ namespace VaultSharp.Extensions.Configuration
                 }
             }
 
-            var keysToRemove = this.versionsCache.Keys.Except(currentKeys).ToList();
+            var keysToRemove = GetRemovedKeys(this.versionsCache.Keys, currentKeys, StringComparer.Ordinal);
             if (keysToUpdate.Count > 0 || keysToRemove.Count > 0)
             {
                 // Build separately so a failed conversion leaves the previous configuration intact.
@@ -209,6 +209,11 @@ namespace VaultSharp.Extensions.Configuration
             }
 
             return hasChanges;
+        }
+
+        private static List<string> GetRemovedKeys(IEnumerable<string> cachedKeys, IEnumerable<string> currentKeys, IEqualityComparer<string> comparer)
+        {
+            return cachedKeys.Except(currentKeys, comparer).ToList();
         }
 
         private void SetData<TValue>(IEnumerable<KeyValuePair<string, TValue>> data, string? key)
