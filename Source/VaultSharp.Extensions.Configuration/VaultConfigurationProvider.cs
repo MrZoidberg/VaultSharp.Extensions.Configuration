@@ -170,18 +170,34 @@ namespace VaultSharp.Extensions.Configuration
                 }
             }
 
-            var keysToRemove = this.versionsCache.Keys.Where(k => !currentKeys.Contains(k)).ToList();
+            var keysToRemove = this.versionsCache.Keys.Except(currentKeys).ToList();
             if (keysToUpdate.Count > 0 || keysToRemove.Count > 0)
             {
-                this.Data.Clear();
-                hasChanges = true;
-                
+                // Build separately so a failed conversion leaves the previous configuration intact.
+                var previousData = this.Data;
+                this.Data = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
+                try
+                {
+                    foreach (var key in currentKeys)
+                    {
+                        var data = keysToUpdate.TryGetValue(key, out var update)
+                            ? (IDictionary<string, object>)update.Data
+                            : this.dataCache[key];
+                        this.SetData(data, this.ConfigurationSource.Options.OmitVaultKeyName ? string.Empty : key);
+                    }
+                }
+                catch
+                {
+                    this.Data = previousData;
+                    throw;
+                }
+
                 foreach (var kvp in keysToUpdate)
                 {
                     this.dataCache[kvp.Key] = (IDictionary<string, object>)kvp.Value.Data;
                     this.versionsCache[kvp.Key] = kvp.Value.Version;
                 }
-                
+
                 foreach (var removedKey in keysToRemove)
                 {
                     this.versionsCache.Remove(removedKey);
@@ -189,12 +205,7 @@ namespace VaultSharp.Extensions.Configuration
                     this.logger?.LogDebug($"VaultConfigurationProvider: key `{removedKey}` was removed from Vault");
                 }
 
-                // Data was cleared, so refill it from every secret that still exists, not only the changed ones.
-                // Vault read order is kept, so overlapping keys resolve the same way as on the first load.
-                foreach (var key in currentKeys)
-                {
-                    this.SetData(this.dataCache[key], this.ConfigurationSource.Options.OmitVaultKeyName ? string.Empty : key);
-                }
+                hasChanges = true;
             }
 
             return hasChanges;
